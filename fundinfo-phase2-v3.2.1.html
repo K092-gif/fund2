@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fundinfo v3.2.1 — Master Fund Comparison Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+  tailwind.config={darkMode:'class',theme:{extend:{
+    colors:{brand:{50:'#eef4ff',100:'#dbe7ff',200:'#bcd0ff',300:'#8fb0ff',500:'#3b6ef6',600:'#2456d8',700:'#1c43ad',800:'#17378e'},
+      pos:{50:'#ecfdf3',500:'#12b76a',600:'#059669',700:'#047857'},
+      neg:{50:'#fef3f2',500:'#f04438',600:'#dc2626'}},
+    fontFamily:{sans:['Prompt','"Noto Sans Thai"','sans-serif'],num:['Inter','Prompt','sans-serif']}}}};
+</script>
+<style>
+  :root{--bg:#eef2f9;--surf:#ffffff;--surf2:#f5f8fd;--txt:#0f1e37;--sub:#607091;--line:#e6ecf5;--brand:#2456d8}
+  .dark{--bg:#0b1220;--surf:#151f33;--surf2:#101929;--txt:#e7edf8;--sub:#93a3c0;--line:#26324b;--brand:#5b8cff}
+  html,body{font-family:'Prompt','Noto Sans Thai',sans-serif}
+  body{background:radial-gradient(1100px 380px at 100% -8%,rgba(59,110,246,.10),transparent),var(--bg);color:var(--txt)}
+  .num{font-family:'Inter','Prompt',sans-serif;font-feature-settings:"tnum"}
+  .surf{background:var(--surf)}.surf2{background:var(--surf2)}
+  .brd{border:1px solid var(--line)}.brdt{border-top:1px solid var(--line)}.brdb{border-bottom:1px solid var(--line)}
+  .sub{color:var(--sub)}
+  ::-webkit-scrollbar{width:9px;height:8px}::-webkit-scrollbar-thumb{background:#a9b6cd;border-radius:8px}
+  .cs{box-shadow:0 1px 2px rgba(16,30,55,.05),0 10px 30px -16px rgba(16,30,55,.25)}
+  .gb{background:linear-gradient(135deg,#2456d8,#4b83ff)}
+  .rkrow{transition:background .14s,box-shadow .14s;cursor:pointer}.rkrow:hover{background:var(--surf2)}
+  .rkrow.sel{background:var(--surf2);box-shadow:inset 3px 0 0 var(--brand)}
+  .select-order{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:7px;background:var(--brand);color:#fff;font:700 10px/1 'Inter',sans-serif;flex:none}
+  .compare-card{border:1px solid var(--line);background:var(--surf);border-radius:12px;padding:10px;transition:transform .15s,box-shadow .15s}
+  .compare-card:hover{transform:translateY(-1px);box-shadow:0 8px 22px -16px rgba(16,30,55,.4)}
+  .metric-cell{background:var(--surf2);border-radius:8px;padding:6px 7px;min-width:0}
+  .metric-help{font-size:8px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .chart-note{background:color-mix(in srgb,var(--brand) 8%,var(--surf));border:1px solid color-mix(in srgb,var(--brand) 22%,var(--line))}
+  .scope-chip{white-space:nowrap;padding:5px 10px;border-radius:999px;font-size:10px;font-weight:700;border:1px solid var(--line);background:var(--surf);color:var(--sub);transition:.14s}
+  .scope-chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .fund-table{border-collapse:separate;border-spacing:0;width:100%;font-size:11px}.fund-table th{position:sticky;top:0;z-index:8;background:var(--surf2);color:var(--sub);font-weight:700;text-align:left;padding:10px 9px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer}.fund-table td{padding:10px 9px;border-bottom:1px solid var(--line);white-space:nowrap}.fund-table tbody tr{cursor:pointer;transition:background .13s}.fund-table tbody tr:hover,.fund-table tbody tr.open{background:var(--surf2)}
+  .signal-card{border:1px solid var(--line);background:var(--surf2);border-radius:10px;padding:9px 10px;min-width:0;text-align:left;transition:.14s}.signal-card[data-scope]:hover{border-color:color-mix(in srgb,var(--brand) 48%,var(--line));transform:translateY(-1px)}
+  .theme-pulse-card{border:1px solid var(--line);background:var(--surf);border-radius:13px;padding:12px;min-width:0;text-align:left;transition:transform .15s,box-shadow .15s,border-color .15s}.theme-pulse-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px -18px rgba(16,30,55,.55)}.theme-pulse-card.on{border-color:var(--brand);box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 15%,transparent)}
+  .trend-status{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:999px;font-size:8px;font-weight:800;white-space:nowrap}
+  .filter-select{background:var(--surf);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:7px 9px;font-size:11px;outline:none;min-width:0;width:100%}
+  .star{color:#cbd5e1;cursor:pointer;font-size:15px;line-height:1}.star.on{color:#f0b429}
+  .fpill{white-space:nowrap;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--line);background:var(--surf);color:var(--sub);cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:5px}
+  .fpill:hover{border-color:#93a3c0}.fpill.on{color:#fff;border-color:transparent}
+  .frow{display:flex;gap:7px;overflow-x:auto;padding-bottom:3px;scrollbar-width:thin}.frow::-webkit-scrollbar{height:5px}
+  .tab{white-space:nowrap;padding:7px 15px;border-radius:11px;font-size:14px;font-weight:700;transition:.15s}
+  @keyframes slidedown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+  .slide{animation:slidedown .22s ease}
+  .chev{transition:transform .22s ease}.chev.open{transform:rotate(180deg)}
+  .lg{display:inline-flex;align-items:center;justify-content:center;border-radius:9px;font-weight:800;font-family:'Inter',sans-serif;color:#fff;letter-spacing:.2px}
+</style>
+</head>
+<body>
+
+<!-- ===== TOP BAR + TABS ===== -->
+<div class="surf brdb cs sticky top-0 z-30">
+  <div class="max-w-[1280px] mx-auto px-4 flex items-center gap-3 h-14">
+    <div class="flex items-center gap-2 shrink-0"><div class="w-8 h-8 rounded-lg gb text-white font-extrabold flex items-center justify-center text-xs">FI</div>
+      <div class="hidden sm:block leading-3"><b class="text-[15px]">Fundinfo</b><div class="text-[9px] sub font-semibold tracking-wide">INVESTMENT EXPOSURE WORKSPACE</div></div></div>
+    <nav id="tabs" class="flex gap-1.5 overflow-x-auto flex-1 py-2 justify-center"></nav>
+    <div class="relative shrink-0">
+      <button id="watchBtn" onclick="toggleWatch()" class="surf brd h-9 px-2.5 rounded-lg text-sm font-bold flex items-center gap-1" title="รายการติดตาม">⭐<span id="wN" class="num text-[11px]">0</span></button>
+      <div id="watchPanel" class="hidden absolute right-0 mt-2 w-72 surf brd rounded-xl cs z-50 overflow-hidden"></div>
+    </div>
+    <button id="themeBtn" onclick="toggleTheme()" class="surf brd w-9 h-9 rounded-lg shrink-0" title="สลับโหมด">🌙</button>
+  </div>
+</div>
+
+<div class="max-w-[1280px] mx-auto px-4 py-4">
+  <div class="mb-3 flex items-end justify-between gap-3 flex-wrap">
+    <div><h1 id="pt" class="text-[19px] font-extrabold leading-5"></h1><p id="ps" class="text-xs sub mt-0.5"></p></div>
+  </div>
+
+  <!-- ===== SECTION 1: THEME / SECTOR TREND ===== -->
+  <div id="trendWrap" class="mb-5"></div>
+
+  <!-- ===== SECTION 2: RANKING CARDS ===== -->
+  <div id="rankingHeading" class="text-[11px] font-bold sub uppercase tracking-wide mb-1.5">② อันดับภายในขอบเขตที่เลือก</div>
+  <div id="cards" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2"></div>
+  <div id="selectionBar" class="hidden mb-5"></div>
+
+  <!-- ===== SECTION 3: MASTER FUND COMPARISON ===== -->
+  <div id="insightWrap" class="mb-5"></div>
+
+  <!-- ===== SECTION 4: FUND SCREENER ===== -->
+  <div class="flex items-center justify-between mb-1.5">
+    <div class="text-[11px] font-bold sub uppercase tracking-wide">④ ค้นหาและคัดกรองกองทุนไทย</div>
+    <button id="cmpBtn" onclick="scrollCmp()" class="px-3 py-1.5 rounded-lg gb text-white text-xs font-bold hidden">เปรียบเทียบกองที่เลือก (<span id="cmpN" class="num">0</span>)</button>
+  </div>
+  <div class="surf brd rounded-xl cs p-2.5 mb-2 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
+    <div class="flex-1 flex items-center gap-2 surf2 brd rounded-lg px-3 py-2"><span class="sub text-sm">🔎</span>
+      <input id="search" oninput="render()" class="flex-1 bg-transparent outline-none text-sm" style="color:var(--txt)" placeholder="ค้นหาชื่อกองทุน / Master Fund / หุ้นที่ถือ (NVIDIA, Samsung, PTT)"></div>
+    <div class="flex items-center gap-2 text-xs">
+      <span id="cnt" class="num px-3 py-2 rounded-lg bg-brand-50 text-brand-700 font-bold whitespace-nowrap"></span>
+      <button id="advBtn" onclick="toggleAdv()" class="px-3 py-2 rounded-lg surf2 brd font-bold flex items-center gap-1.5 transition" title="ตัวกรองเพิ่มเติม">⚙️ ตัวกรองเพิ่มเติม<span id="advN" class="hidden num text-white text-[10px] font-extrabold rounded-full px-1.5 min-w-[16px] text-center"></span></button>
+    </div>
+  </div>
+  <div id="quickFilters" class="mb-2"></div>
+  <div id="advFilter" class="mb-2"></div>
+  <div id="tableHeading" class="text-[11px] font-bold sub uppercase tracking-wide mb-1.5">⑤ ตารางกองทุนที่เกี่ยวข้อง</div>
+  <div id="tableWrap" class="surf brd rounded-xl cs overflow-x-auto mb-3"></div>
+  <div id="cmp" class="hidden mb-3"></div>
+  <div id="drawerHeading" class="hidden mb-1.5"></div>
+  <div id="list" class="flex flex-col gap-2.5"></div>
+  <div id="empty" class="hidden text-center py-14 sub"><div class="text-3xl mb-2">🔍</div>ไม่พบกองทุนที่ตรงเงื่อนไข</div>
+  <p class="text-center text-[11px] sub mt-8">Fundinfo v3.2.1 · Master Fund Comparison Workspace · ต้นแบบเพื่อการออกแบบ ตัวเลขเป็นข้อมูลตัวอย่าง ไม่ใช่คำแนะนำการลงทุน</p>
+</div>
+
+<script>
+/* ================= THEME ================= */
+(function(){try{if(localStorage.getItem('fi32-theme')==='dark')document.documentElement.classList.add('dark');}catch(e){}})();
+function toggleTheme(){const d=document.documentElement.classList.toggle('dark');try{localStorage.setItem('fi32-theme',d?'dark':'light')}catch(e){}document.getElementById('themeBtn').textContent=d?'☀️':'🌙';render();}
+
+/* ================= FUND TYPES ================= */
+const TYPES={
+  feeder:{label:'Feeder Fund',emoji:'🌐',sub:'สำรวจและเปรียบเทียบ Master Fund ก่อนค้นหากองทุนไทยที่เข้าถึงได้',acc:'#2456d8',rightTitle:'Master Fund Comparison'},
+  offshore:{label:'Offshore Fund',emoji:'✈️',sub:'กองทุนไทยที่ลงทุนตรงในหุ้นต่างประเทศ — เริ่มจาก Sector หรือประเทศ แล้วเจาะดูหุ้นและกองทุนที่ถือ',acc:'#0e7ac0',rightTitle:'Stock Comparison'},
+  thai:{label:'Thai Fund',emoji:'🇹🇭',sub:'กองทุนหุ้นไทยที่ลงทุนในหุ้นรายตัว — เริ่มจากกลุ่มอุตสาหกรรม แล้วเจาะดูหุ้นและกองทุนที่ถือ',acc:'#0e9f6e',rightTitle:'Stock Comparison'},
+  mixed:{label:'Mixed Fund',emoji:'⚖️',sub:'สำรวจโครงสร้างกองทุนที่ผสมหลายสินทรัพย์ไว้ในพอร์ตเดียว',acc:'#7a5af5',rightTitle:''}
+};
+const CMIX={'หุ้นไทย':'#2456d8','หุ้นต่างประเทศ':'#0e7ac0','ตราสารหนี้':'#12b76a','ทองคำ':'#e0a411','น้ำมัน/โภคภัณฑ์':'#64748b','เงินสด':'#c3cede'};
+const ASSETS=['หุ้นไทย','หุ้นต่างประเทศ','ตราสารหนี้','ทองคำ','น้ำมัน/โภคภัณฑ์','เงินสด'];
+const GROUP={'สหรัฐฯ':'US Equity','ทั่วโลก':'Global Equity','เกาหลีใต้':'Asia Pacific Ex Japan','ยุโรป':'Europe Equity','ทองคำโลก':'Commodity - Gold','จีน':'China Equity','สหรัฐฯ/ยุโรป':'Global Healthcare'};
+const AMC={'ไทยพาณิชย์ จำกัด (บลจ.)':'SCB','อีสท์สปริง (บลจ.)':'ES','กสิกรไทย (บลจ.)':'KA','abrdn (บลจ.)':'ab','บัวหลวง (บลจ.)':'BBL','บีแคป (บลจ.)':'BCAP','กรุงศรี (บลจ.)':'KSAM','วรรณ (บลจ.)':'ONE','เกียรตินาคินภัทร (บลจ.)':'KKP'};
+
+const FUNDS=[
+ {id:'SCBNDQ',type:'feeder',name:'ไทยพาณิชย์ หุ้นสหรัฐเทคโนโลยี (NASDAQ100)',amc:'ไทยพาณิชย์ จำกัด (บลจ.)',risk:6,fee:1.28,div:0.0,master:'Invesco NASDAQ-100 ETF',country:'สหรัฐฯ',asset:[['หน่วยลงทุน (Master Fund)',99],['เงินฝาก/อื่นๆ',1]],top5:[['NVIDIA',9.1],['Apple',8.8],['Microsoft',8.0],['Broadcom',4.8],['Amazon',4.6]],themes:['สหรัฐฯ','เทคโนโลยี','AI'],netbuy:1240,perf:24.1,pop:48200},
+ {id:'TNDQ',type:'feeder',name:'ธนชาต หุ้นสหรัฐ NASDAQ100',amc:'อีสท์สปริง (บลจ.)',risk:6,fee:0.62,div:0.0,master:'Invesco NASDAQ-100 ETF',country:'สหรัฐฯ',asset:[['หน่วยลงทุน (Master Fund)',99],['เงินฝาก/อื่นๆ',1]],top5:[['NVIDIA',9.1],['Apple',8.8],['Microsoft',8.0],['Broadcom',4.8],['Amazon',4.6]],themes:['สหรัฐฯ','เทคโนโลยี','AI'],netbuy:1980,perf:24.3,pop:33100},
+ {id:'K-CHANGE',type:'feeder',name:'กสิกร หุ้นโลกเปลี่ยนโลก (Positive Change)',amc:'กสิกรไทย (บลจ.)',risk:6,fee:1.92,div:0.0,master:'Baillie Gifford Positive Change',country:'ทั่วโลก',asset:[['หน่วยลงทุน (Master Fund)',97.4],['เงินฝาก/อื่นๆ',2.6]],top5:[['NVIDIA',5.4],['ASML',4.9],['MercadoLibre',4.2],['TSMC',3.8],['Moderna',3.1]],themes:['ทั่วโลก','ยั่งยืน (ESG)','นวัตกรรม'],netbuy:-220,perf:5.1,pop:15400},
+ {id:'SCBKEQTGE',type:'feeder',name:'ไทยพาณิชย์ หุ้นเกาหลี ชนิดช่องทางอิเล็กทรอนิกส์',amc:'ไทยพาณิชย์ จำกัด (บลจ.)',risk:6,fee:1.61,div:0.0,master:'iShares MSCI South Korea ETF',country:'เกาหลีใต้',asset:[['หน่วยลงทุน (Master Fund)',94.8],['เงินฝาก',3.1],['ตราสารหนี้',1.2],['อื่นๆ',0.9]],top5:[['Samsung Electronics',24.9],['SK Hynix',11.2],['Hyundai Motor',4.1],['KB Financial',3.4],['SK Square',2.8]],themes:['เกาหลีใต้','เซมิคอนดักเตอร์','เทคโนโลยี'],netbuy:410,perf:11.0,pop:12200},
+ {id:'ABEG',type:'feeder',name:'abrdn หุ้นยุโรปยั่งยืน',amc:'abrdn (บลจ.)',risk:6,fee:2.05,div:0.0,master:'abrdn European Sustainable Equity',country:'ยุโรป',asset:[['หน่วยลงทุน (Master Fund)',98.8],['เงินฝาก/อื่นๆ',1.2]],top5:[['ASML',6.8],['Finecobank',5.2],['Prudential',3.9],['Hiscox',3.8],['LSE Group',3.6]],themes:['ยุโรป','ESG','การเงิน'],netbuy:90,perf:6.8,pop:6800},
+ {id:'SCBGOLDH',type:'feeder',name:'ไทยพาณิชย์ ทองคำ (ป้องกันค่าเงิน)',amc:'ไทยพาณิชย์ จำกัด (บลจ.)',risk:8,fee:0.97,div:0.0,master:'SPDR Gold Shares',country:'ทองคำโลก',asset:[['หน่วยลงทุน (Master Fund)',99.5],['เงินฝาก/อื่นๆ',0.5]],top5:[['Physical Gold',99.5]],themes:['ทองคำ','สินทรัพย์ปลอดภัย'],netbuy:1620,perf:21.0,pop:39800},
+
+ {id:'KGHEALTH',type:'offshore',name:'กสิกร สุขภาพโลก (Global Healthcare)',amc:'กสิกรไทย (บลจ.)',risk:6,fee:1.95,div:0.5,country:'สหรัฐฯ/ยุโรป',asset:[['หุ้นต่างประเทศ',94],['เงินฝาก/อื่นๆ',6]],top5:[['Eli Lilly',6.2],['UnitedHealth',5.1],['Novo Nordisk',4.7],['Johnson & Johnson',4.0],['AbbVie',3.6]],themes:['สุขภาพ','เมกะเทรนด์','สังคมสูงวัย'],netbuy:430,perf:9.8,pop:12800},
+ {id:'SCBCHA',type:'offshore',name:'ไทยพาณิชย์ หุ้นจีน A-Shares',amc:'ไทยพาณิชย์ จำกัด (บลจ.)',risk:6,fee:1.84,div:0.0,country:'จีน',asset:[['หุ้นต่างประเทศ',96],['เงินฝาก/อื่นๆ',4]],top5:[['Kweichow Moutai',5.8],['CATL',4.9],['Ping An',3.6],['Midea Group',3.1],['BYD',2.9]],themes:['จีน','ผู้บริโภคจีน','EV'],netbuy:760,perf:3.2,pop:28400},
+ {id:'KKPGNP',type:'offshore',name:'เกียรตินาคินภัทร หุ้นโลก (Global Equity)',amc:'เกียรตินาคินภัทร (บลจ.)',risk:6,fee:2.01,div:0.3,country:'ทั่วโลก',asset:[['หุ้น/หน่วยลงทุนต่างประเทศ',95],['เงินฝาก/อื่นๆ',5]],top5:[['Microsoft',3.4],['Novo Nordisk',2.8],['Meta',2.5],['TSMC',2.3],['LVMH',2.0]],themes:['หุ้นโลก','เติบโต'],netbuy:520,perf:13.2,pop:14200},
+ {id:'TUSFIN',type:'offshore',name:'ธนชาต ตราสารหนี้โลก (Global Bond)',amc:'อีสท์สปริง (บลจ.)',risk:4,fee:1.05,div:1.8,country:'ทั่วโลก',asset:[['ตราสารหนี้ต่างประเทศ',92],['เงินฝาก/อื่นๆ',8]],top5:[['US Treasury 10Y',6.0],['German Bund',4.2],['US Treasury 5Y',3.8],['UK Gilt',2.6],['JGB 10Y',2.1]],themes:['ตราสารหนี้','รายได้สม่ำเสมอ'],netbuy:260,perf:4.0,pop:7400},
+
+ {id:'BEQUITY',type:'thai',name:'บัวหลวงหุ้นระยะยาว',amc:'บัวหลวง (บลจ.)',risk:6,fee:1.61,div:1.2,active:62,asset:[['หุ้นสามัญไทย',96],['เงินฝาก/อื่นๆ',4]],top5:[['DELTA',8.4],['GULF',6.1],['PTT',5.2],['ADVANC',4.8],['KBANK',4.2]],themes:['หุ้นไทย','คัดเลือกเชิงรุก (Active)'],netbuy:-180,perf:2.4,pop:18600},
+ {id:'SCBSET50',type:'thai',name:'ไทยพาณิชย์ ดัชนี SET50',amc:'ไทยพาณิชย์ จำกัด (บลจ.)',risk:6,fee:0.62,div:2.1,active:4,asset:[['หุ้นสามัญไทย',99],['เงินฝาก/อื่นๆ',1]],top5:[['DELTA',10.1],['AOT',6.4],['PTT',5.9],['ADVANC',5.2],['CPALL',4.7]],themes:['หุ้นไทย','ดัชนี (Index)','ค่าธรรมเนียมต่ำ'],netbuy:340,perf:0.6,pop:16100},
+ {id:'BDIVSET',type:'thai',name:'บีแคป หุ้นไทยปันผล',amc:'บีแคป (บลจ.)',risk:6,fee:1.15,div:4.3,active:48,asset:[['หุ้นสามัญไทย',97],['เงินฝาก/อื่นๆ',3]],top5:[['PTT',6.8],['ADVANC',6.0],['KTB',5.1],['INTUCH',4.4],['TISCO',3.9]],themes:['หุ้นไทย','ปันผลสูง','รายได้สม่ำเสมอ'],netbuy:240,perf:4.9,pop:11900},
+ {id:'ABSM',type:'thai',name:'abrdn หุ้นไทยเล็ก-กลาง',amc:'abrdn (บลจ.)',risk:6,fee:1.88,div:0.8,active:78,asset:[['หุ้นสามัญไทย',94],['เงินฝาก/อื่นๆ',6]],top5:[['BJC',4.2],['COM7',3.8],['BCH',3.3],['AMATA',3.0],['SPA',2.7]],themes:['หุ้นไทย','หุ้นเล็ก-กลาง','เชิงรุก'],netbuy:120,perf:6.1,pop:8900},
+
+ {id:'BMIXED75',type:'mixed',name:'บัวหลวงผสม 75/25',amc:'บัวหลวง (บลจ.)',risk:5,fee:1.78,div:0.9,mix:[['หุ้นไทย',52],['หุ้นต่างประเทศ',21],['ตราสารหนี้',22],['เงินสด',5]],asset:[['หุ้นสามัญ',73],['พันธบัตร/หุ้นกู้',22],['เงินฝาก/อื่นๆ',5]],top5:[['DELTA',10.1],['พันธบัตร ธปท.',6.3],['GULF',5.4],['พันธบัตรรัฐบาล',5.1],['PTT',5.0]],themes:['ผสม','เชิงรุก'],netbuy:300,perf:18.0,pop:9800},
+ {id:'KFAMSALL',type:'mixed',name:'กรุงศรี ผสมหลากสินทรัพย์',amc:'กรุงศรี (บลจ.)',risk:5,fee:1.45,div:1.1,mix:[['หุ้นไทย',20],['หุ้นต่างประเทศ',30],['ตราสารหนี้',30],['ทองคำ',12],['น้ำมัน/โภคภัณฑ์',8]],asset:[['หุ้น (ไทย+ตปท.)',50],['ตราสารหนี้',30],['ทองคำ',12],['โภคภัณฑ์',8]],top5:[['iShares MSCI ACWI',12.0],['พันธบัตรรัฐบาลไทย',10.0],['SPDR Gold',8.0],['หุ้นกู้เอกชน',7.0],['DELTA',3.0]],themes:['ผสม','หลากสินทรัพย์','ทองคำ'],netbuy:150,perf:8.4,pop:6200},
+ {id:'ONEMIX',type:'mixed',name:'วรรณ ผสมหุ้น+ทองคำ',amc:'วรรณ (บลจ.)',risk:5,fee:1.55,div:0.7,mix:[['หุ้นไทย',35],['หุ้นต่างประเทศ',25],['ทองคำ',25],['เงินสด',15]],asset:[['หุ้น (ไทย+ตปท.)',60],['ทองคำ',25],['เงินฝาก/อื่นๆ',15]],top5:[['SPDR Gold',25.0],['DELTA',5.2],['NVIDIA',4.0],['PTT',3.4],['ADVANC',2.9]],themes:['ผสม','ทองคำ'],netbuy:80,perf:12.5,pop:4300},
+ {id:'SCBCONSER',type:'mixed',name:'ไทยพาณิชย์ ผสมระมัดระวัง',amc:'ไทยพาณิชย์ จำกัด (บลจ.)',risk:4,fee:1.02,div:1.6,mix:[['ตราสารหนี้',62],['หุ้นไทย',18],['หุ้นต่างประเทศ',10],['เงินสด',10]],asset:[['พันธบัตร/หุ้นกู้',62],['หุ้นสามัญ',28],['เงินฝาก/อื่นๆ',10]],top5:[['พันธบัตรรัฐบาล 5Y',9.0],['หุ้นกู้ PTT',4.0],['DELTA',3.2],['พันธบัตร ธปท.',3.0],['ADVANC',2.6]],themes:['ผสม','ระมัดระวัง'],netbuy:180,perf:5.2,pop:5600}
+];
+// sector allocation per fund (SET / GICS style)
+const SECTORS={
+ SCBNDQ:[['Technology',48],['Consumer Disc.',18],['Communication',16],['Health Care',6],['Industrials',5],['อื่นๆ',7]],
+ TNDQ:[['Technology',48],['Consumer Disc.',18],['Communication',16],['Health Care',6],['Industrials',5],['อื่นๆ',7]],
+ 'K-CHANGE':[['Technology',30],['Health Care',22],['Consumer Disc.',18],['Financials',12],['Industrials',8],['อื่นๆ',10]],
+ SCBKEQTGE:[['Technology',42],['Consumer Disc.',14],['Financials',12],['Industrials',10],['Communication',8],['อื่นๆ',14]],
+ ABEG:[['Financials',26],['Industrials',20],['Health Care',16],['Technology',14],['Consumer',10],['อื่นๆ',14]],
+ SCBGOLDH:[['ทองคำ (Commodity)',100]],
+ KGHEALTH:[['ยา (Pharma)',34],['เครื่องมือแพทย์',27],['ไบโอเทค',21],['ประกันสุขภาพ',10],['อื่นๆ',8]],
+ SCBCHA:[['การเงิน',22],['อุตสาหกรรม',18],['สินค้าอุปโภค',16],['เทคโนโลยี',14],['อื่นๆ',30]],
+ KKPGNP:[['Technology',24],['Health Care',14],['Financials',13],['Consumer Disc.',12],['อื่นๆ',37]],
+ TUSFIN:[['พันธบัตรรัฐบาล',54],['หุ้นกู้คุณภาพสูง',30],['หุ้นกู้ผลตอบแทนสูง',12],['ตลาดเกิดใหม่',4]],
+ BEQUITY:[['การเงิน',24],['พลังงาน',17],['ICT',14],['พาณิชย์',12],['อิเล็กทรอนิกส์',11],['อื่นๆ',22]],
+ SCBSET50:[['การเงิน',22],['พลังงาน',20],['ICT',13],['พาณิชย์',11],['อิเล็กทรอนิกส์',9],['อื่นๆ',25]],
+ BDIVSET:[['พลังงาน',22],['การเงิน',20],['ICT',16],['อสังหา',12],['พาณิชย์',9],['อื่นๆ',21]],
+ ABSM:[['พาณิชย์',18],['อุตสาหกรรม',16],['อาหาร',15],['สุขภาพ',12],['อสังหา',11],['อื่นๆ',28]],
+ BMIXED75:[['พลังงาน',20],['การเงิน',18],['อิเล็กทรอนิกส์',16],['ICT',12],['พาณิชย์',10],['อื่นๆ',24]],
+ KFAMSALL:[['Technology',22],['การเงิน',16],['พลังงาน',12],['สุขภาพ',10],['สินค้าอุปโภค',10],['อื่นๆ',30]],
+ ONEMIX:[['Technology',26],['พลังงาน',16],['การเงิน',14],['พาณิชย์',10],['อิเล็กทรอนิกส์',8],['อื่นๆ',26]],
+ SCBCONSER:[['การเงิน',20],['พลังงาน',16],['ICT',12],['พาณิชย์',10],['อิเล็กทรอนิกส์',8],['อื่นๆ',34]]
+};
+const WRAPPER_TYPES=['ทั่วไป','SSF','RMF','ThaiESG','ThaiESGX','LTF'];
+const SCOPE_LABELS={'Technology':'เทคโนโลยี','Health Care':'สุขภาพ','Consumer Disc.':'สินค้าอุปโภคบริโภค','Consumer':'สินค้าอุปโภคบริโภค','Financials':'การเงิน','Industrials':'อุตสาหกรรม','Communication':'สื่อและแพลตฟอร์มดิจิทัล','ICT':'เทคโนโลยีและสื่อสาร'};
+const normalizeScopeLabel=label=>SCOPE_LABELS[label]||label;
+const STOCK_META={
+ 'Eli Lilly':{ticker:'LLY',sector:'สุขภาพ',country:'สหรัฐฯ',ret:33.5,dd:-18.4,div:0.7,pe:37.8,pb:20.4,cap:'US$ 775B'},
+ 'UnitedHealth':{ticker:'UNH',sector:'สุขภาพ',country:'สหรัฐฯ',ret:-8.2,dd:-31.6,div:1.6,pe:17.2,pb:5.1,cap:'US$ 455B'},
+ 'Novo Nordisk':{ticker:'NVO',sector:'สุขภาพ',country:'เดนมาร์ก',ret:-18.5,dd:-34.1,div:1.8,pe:22.6,pb:14.2,cap:'US$ 310B'},
+ 'Johnson & Johnson':{ticker:'JNJ',sector:'สุขภาพ',country:'สหรัฐฯ',ret:6.1,dd:-12.8,div:3.1,pe:15.4,pb:5.3,cap:'US$ 370B'},
+ 'AbbVie':{ticker:'ABBV',sector:'สุขภาพ',country:'สหรัฐฯ',ret:14.7,dd:-14.2,div:3.4,pe:16.8,pb:32.1,cap:'US$ 305B'},
+ 'Kweichow Moutai':{ticker:'600519',sector:'สินค้าอุปโภคบริโภค',country:'จีน',ret:-6.2,dd:-24.8,div:3.2,pe:21.4,pb:7.6,cap:'US$ 255B'},
+ 'CATL':{ticker:'300750',sector:'อุตสาหกรรม',country:'จีน',ret:18.4,dd:-28.3,div:0.9,pe:19.8,pb:4.9,cap:'US$ 155B'},
+ 'Ping An':{ticker:'601318',sector:'การเงิน',country:'จีน',ret:9.1,dd:-22.6,div:5.1,pe:8.2,pb:0.9,cap:'US$ 110B'},
+ 'Midea Group':{ticker:'000333',sector:'สินค้าอุปโภคบริโภค',country:'จีน',ret:14.7,dd:-17.9,div:4.2,pe:13.6,pb:3.1,cap:'US$ 78B'},
+ 'BYD':{ticker:'002594',sector:'สินค้าอุปโภคบริโภค',country:'จีน',ret:22.5,dd:-26.7,div:0.6,pe:25.7,pb:5.8,cap:'US$ 125B'},
+ 'Microsoft':{ticker:'MSFT',sector:'เทคโนโลยี',country:'สหรัฐฯ',ret:18.9,dd:-16.4,div:0.7,pe:31.5,pb:10.8,cap:'US$ 3.2T'},
+ 'Meta':{ticker:'META',sector:'สื่อและแพลตฟอร์มดิจิทัล',country:'สหรัฐฯ',ret:35.6,dd:-19.7,div:0.4,pe:24.1,pb:8.9,cap:'US$ 1.5T'},
+ 'TSMC':{ticker:'TSM',sector:'เทคโนโลยี',country:'ไต้หวัน',ret:31.5,dd:-22.1,div:1.4,pe:23.8,pb:7.2,cap:'US$ 980B'},
+ 'LVMH':{ticker:'MC',sector:'สินค้าอุปโภคบริโภค',country:'ฝรั่งเศส',ret:-4.8,dd:-27.5,div:2.1,pe:20.4,pb:4.3,cap:'€ 305B'},
+ 'DELTA':{ticker:'DELTA',sector:'อิเล็กทรอนิกส์',country:'ไทย',ret:-12.0,dd:-31.4,div:0.4,pe:52.3,pb:14.8,cap:'฿ 1.4T'},
+ 'GULF':{ticker:'GULF',sector:'พลังงานและสาธารณูปโภค',country:'ไทย',ret:9.5,dd:-18.9,div:1.8,pe:29.6,pb:5.4,cap:'฿ 540B'},
+ 'PTT':{ticker:'PTT',sector:'พลังงานและสาธารณูปโภค',country:'ไทย',ret:-3.1,dd:-16.2,div:6.2,pe:9.4,pb:0.8,cap:'฿ 940B'},
+ 'ADVANC':{ticker:'ADVANC',sector:'เทคโนโลยีและสื่อสาร',country:'ไทย',ret:14.2,dd:-11.8,div:3.8,pe:23.1,pb:8.2,cap:'฿ 685B'},
+ 'KBANK':{ticker:'KBANK',sector:'การเงิน',country:'ไทย',ret:11.6,dd:-15.4,div:4.5,pe:7.8,pb:0.7,cap:'฿ 305B'},
+ 'AOT':{ticker:'AOT',sector:'ขนส่งและท่องเที่ยว',country:'ไทย',ret:-6.4,dd:-23.7,div:1.2,pe:36.8,pb:6.1,cap:'฿ 880B'},
+ 'CPALL':{ticker:'CPALL',sector:'พาณิชย์',country:'ไทย',ret:7.9,dd:-14.3,div:2.4,pe:24.6,pb:4.8,cap:'฿ 575B'},
+ 'KTB':{ticker:'KTB',sector:'การเงิน',country:'ไทย',ret:18.9,dd:-10.6,div:5.3,pe:7.2,pb:0.8,cap:'฿ 255B'},
+ 'INTUCH':{ticker:'INTUCH',sector:'เทคโนโลยีและสื่อสาร',country:'ไทย',ret:12.1,dd:-9.8,div:4.7,pe:20.1,pb:6.7,cap:'฿ 245B'},
+ 'TISCO':{ticker:'TISCO',sector:'การเงิน',country:'ไทย',ret:6.5,dd:-8.4,div:7.2,pe:10.6,pb:1.9,cap:'฿ 78B'},
+ 'BJC':{ticker:'BJC',sector:'พาณิชย์',country:'ไทย',ret:3.1,dd:-19.8,div:3.0,pe:22.4,pb:1.1,cap:'฿ 92B'},
+ 'COM7':{ticker:'COM7',sector:'พาณิชย์',country:'ไทย',ret:-9.4,dd:-28.2,div:3.6,pe:18.2,pb:6.4,cap:'฿ 58B'},
+ 'BCH':{ticker:'BCH',sector:'การแพทย์',country:'ไทย',ret:5.6,dd:-17.4,div:2.8,pe:25.1,pb:3.9,cap:'฿ 41B'},
+ 'AMATA':{ticker:'AMATA',sector:'นิคมอุตสาหกรรม',country:'ไทย',ret:12.7,dd:-15.6,div:2.5,pe:13.8,pb:1.4,cap:'฿ 27B'},
+ 'SPA':{ticker:'SPA',sector:'ขนส่งและท่องเที่ยว',country:'ไทย',ret:-4.1,dd:-25.3,div:1.0,pe:29.4,pb:5.7,cap:'฿ 8B'}
+};
+const THAI_INDUSTRY_GROUPS=[
+ {id:'AGRO',title:'เกษตรและอุตสาหกรรมอาหาร',subtitle:'AGRO',stocks:[]},
+ {id:'CONSUMP',title:'สินค้าอุปโภคบริโภค',subtitle:'CONSUMP',stocks:[]},
+ {id:'FINCIAL',title:'ธุรกิจการเงิน',subtitle:'FINCIAL',stocks:['KBANK','KTB','TISCO']},
+ {id:'INDUS',title:'สินค้าอุตสาหกรรม',subtitle:'INDUS',stocks:[]},
+ {id:'PROP',title:'อสังหาริมทรัพย์และก่อสร้าง',subtitle:'PROP',stocks:['AMATA']},
+ {id:'RESOURC',title:'ทรัพยากร',subtitle:'RESOURC',stocks:['GULF','PTT']},
+ {id:'SERVICE',title:'บริการ',subtitle:'SERVICE',stocks:['AOT','CPALL','BJC','COM7','BCH','SPA']},
+ {id:'TECH',title:'เทคโนโลยี',subtitle:'TECH',stocks:['DELTA','ADVANC','INTUCH']}
+];
+const OFFSHORE_REGION_GROUPS=[
+ {id:'REG_GLOBAL',title:'หุ้นโลก',subtitle:'Global Equity',fundIds:['KGHEALTH','KKPGNP']},
+ {id:'REG_US',title:'หุ้นสหรัฐฯ',subtitle:'US Equity',fundIds:[]},
+ {id:'REG_CHINA',title:'หุ้นจีน',subtitle:'Chinese Equity',fundIds:['SCBCHA']},
+ {id:'REG_VIETNAM',title:'หุ้นเวียดนาม',subtitle:'Vietnam Equity',fundIds:[]},
+ {id:'REG_INDIA',title:'หุ้นอินเดีย',subtitle:'Indian Equity',fundIds:[]},
+ {id:'REG_JAPAN',title:'หุ้นญี่ปุ่น',subtitle:'Japanese Equity',fundIds:[]},
+ {id:'REG_EUROPE',title:'หุ้นยุโรป',subtitle:'European Equity',fundIds:[]},
+ {id:'REG_KOREA',title:'หุ้นเกาหลี',subtitle:'Korea Equity',fundIds:[]},
+ {id:'REG_EM',title:'ตลาดเกิดใหม่',subtitle:'Emerging Markets',fundIds:[]}
+];
+const OFFSHORE_THEME_GROUPS=[
+ {id:'MEGA_TECH',title:'เทคโนโลยีภาพรวม',subtitle:'Technology / Tech',stocks:['Microsoft','Meta','TSMC']},
+ {id:'MEGA_AI',title:'ปัญญาประดิษฐ์และหุ่นยนต์',subtitle:'AI & Robotics',stocks:['Microsoft','Meta']},
+ {id:'MEGA_SEMI',title:'เซมิคอนดักเตอร์',subtitle:'Semiconductor',stocks:['TSMC']},
+ {id:'MEGA_HEALTH',title:'นวัตกรรมสุขภาพ',subtitle:'Healthcare & Biotech',stocks:['Eli Lilly','UnitedHealth','Novo Nordisk','Johnson & Johnson','AbbVie']},
+ {id:'MEGA_CLEANEV',title:'พลังงานสะอาดและรถยนต์ไฟฟ้า',subtitle:'Clean Energy & EV',stocks:['CATL','BYD']},
+ {id:'MEGA_LUXURY',title:'สินค้าแบรนด์เนมและสินค้าฟุ่มเฟือย',subtitle:'Luxury Brands',stocks:['LVMH','Kweichow Moutai']},
+ {id:'MEGA_CYBER',title:'ความปลอดภัยทางไซเบอร์',subtitle:'Cyber Security',stocks:[]},
+ {id:'MEGA_INFRA',title:'โครงสร้างพื้นฐานทั่วโลก',subtitle:'Global Infrastructure',stocks:[]},
+ {id:'MEGA_REIT',title:'อสังหาริมทรัพย์ทั่วโลก',subtitle:'Global REITs',stocks:[]}
+];
+function stockTaxonomy(){if(state.tab==='thai')return THAI_INDUSTRY_GROUPS;return state.scopeMode==='theme'?OFFSHORE_THEME_GROUPS:OFFSHORE_REGION_GROUPS;}
+// derived data
+FUNDS.forEach(f=>{const h=[...f.id].reduce((a,c)=>a+c.charCodeAt(0),0);const j=(s,sc)=>(((h*s)%11)/11-0.5)*sc;
+  f.flowP={w1:Math.round(f.netbuy*(0.3+j(3,0.15))),m1:f.netbuy,y1:Math.round(f.netbuy*(6+j(7,1.4)))};
+  f.retP={m1:+(f.perf*(0.14+j(2,0.06))).toFixed(1),q1:+(f.perf*(0.42+j(4,0.12))).toFixed(1),y1:f.perf,y3:+(f.perf*(0.76+j(6,0.18))).toFixed(1),y5:+(f.perf*(0.68+j(8,0.18))).toFixed(1)};
+  f.nav=+(12+(h%280)/10).toFixed(4); f.aum=Math.max(30,Math.round(f.pop/90));
+  f.group=GROUP[f.country]||(f.type==='thai'?'Thai Equity':f.type==='mixed'?'Mixed / Allocation':'Foreign Equity');
+  f.amcCode=AMC[f.amc]||f.amc.slice(0,2);f.sectors=SECTORS[f.id]||null;
+  let fx;if(f.type==='thai'||f.type==='mixed')fx=null;else if(/ป้องกันค่าเงิน/.test(f.name))fx=100;else{const m=h%3;fx=m===0?0:m===1?100:Math.round(35+Math.abs(j(15,50)));}
+  f.wrapper=WRAPPER_TYPES[h%WRAPPER_TYPES.length];f.minInvest=[1,500,1000,5000][h%4];
+  f.st={sharpe:+(0.45+Math.abs(j(9,1.3))+(f.perf>10?0.25:0)).toFixed(2),sd:+(7+Math.abs(j(10,24))).toFixed(1),beta:+(0.82+Math.abs(j(11,0.35))).toFixed(2),maxdd:+(-(18+Math.abs(j(12,35)))).toFixed(2),recover:Math.round(4+Math.abs(j(13,9))),fxhedge:fx};
+  // calendar-year returns (5 yrs) deterministic
+  f.cyr=['2564','2565','2566','2567','2568'].map((y,i)=>{const s=((h*(i+3))%97)/97-0.42;return[y,+((f.perf*0.55)+s*42).toFixed(1)];});
+});
+
+/* ================= THEME / MASTER INSIGHTS DATA ================= */
+const INSIGHT={
+ 'Invesco NASDAQ-100 ETF':{theme:'US Technology (NASDAQ-100)',narr:'หุ้นเทคโนโลยีสหรัฐฯ ขนาดใหญ่ 100 บริษัทในตลาด NASDAQ ผู้นำเทรนด์ AI, คลาวด์ และเซมิคอนดักเตอร์ที่ขับเคลื่อนเศรษฐกิจดิจิทัลของโลก',pe:31.2,pb:7.8,flow:3820,bench:'NASDAQ-100 Index',
+   master:{name:'Invesco NASDAQ-100 ETF (QQQM)',amc:'Invesco',aum:'US$ 42.6B',incep:'ต.ค. 2020',te:0.18,pm:'ยังคงน้ำหนักกลุ่ม AI/เซมิคอนดักเตอร์ที่ได้อานิสงส์การลงทุน data center ทั่วโลก แม้ valuation ตึงตัว แต่การเติบโตของกำไรยังหนุนราคาในระยะกลาง'},
+   top:[['NVIDIA','NVDA',9.1,62.4],['Apple','AAPL',8.8,12.1],['Microsoft','MSFT',8.0,18.9],['Broadcom','AVGO',4.8,41.2],['Amazon','AMZN',4.6,22.7],['Meta','META',4.1,35.6],['Alphabet','GOOGL',3.4,15.3],['Tesla','TSLA',2.6,-8.4],['Costco','COST',2.3,19.0],['Netflix','NFLX',2.0,28.5]]},
+ 'Baillie Gifford Positive Change':{theme:'Global Sustainable Growth',narr:'กองหุ้นเติบโตทั่วโลกที่คัดเฉพาะบริษัทซึ่งสร้างผลกระทบเชิงบวกต่อสังคมและสิ่งแวดล้อม เน้นนวัตกรรมและการเติบโตระยะยาว',pe:28.5,pb:4.9,flow:-540,bench:'MSCI ACWI',
+   master:{name:'Baillie Gifford Positive Change',amc:'Baillie Gifford',aum:'£ 2.1B',incep:'ม.ค. 2017',te:6.2,pm:'พอร์ตกระจุกตัวในหุ้นเติบโตสูง จึงผันผวนกว่าตลาดในช่วงดอกเบี้ยสูง แต่เรายังเชื่อมั่นในธีมการเปลี่ยนผ่านพลังงานและเฮลท์แคร์ระยะยาว'},
+   top:[['NVIDIA','NVDA',5.4,62.4],['ASML','ASML',4.9,9.8],['MercadoLibre','MELI',4.2,24.1],['TSMC','TSM',3.8,31.5],['Moderna','MRNA',3.1,-22.0],['Tesla','TSLA',2.9,-8.4],['Ørsted','ORST',2.4,-14.2],['Shopify','SHOP',2.2,17.6],['Dexcom','DXCM',2.0,-5.1],['Novonesis','NVZ',1.8,6.3]]},
+ 'iShares MSCI South Korea ETF':{theme:'Korea Equity',narr:'หุ้นเกาหลีใต้ ศูนย์กลางเซมิคอนดักเตอร์และเทคโนโลยีของเอเชีย โดดเด่นด้วย Samsung และ SK Hynix ผู้ผลิตชิปหน่วยความจำระดับโลก',pe:11.4,pb:1.1,flow:1240,bench:'MSCI Korea Index',
+   master:{name:'iShares MSCI South Korea ETF (EWY)',amc:'BlackRock',aum:'US$ 3.9B',incep:'พ.ค. 2000',te:0.34,pm:'วัฏจักรหน่วยความจำ (memory) ฟื้นตัวหนุนกำไร Samsung/SK Hynix จากดีมานด์ HBM สำหรับงาน AI'},
+   top:[['Samsung Elec.','005930',24.9,18.2],['SK Hynix','000660',11.2,44.6],['Hyundai Motor','005380',4.1,7.9],['KB Financial','105560',3.4,21.3],['SK Square','402340',2.8,33.1],['Samsung SDI','006400',2.4,-12.5],['NAVER','035420',2.2,-6.8],['Celltrion','068270',2.0,4.1],['Kia','000270',1.9,9.5],['POSCO','005490',1.7,-3.2]]},
+ 'abrdn European Sustainable Equity':{theme:'European Sustainability',narr:'หุ้นยุโรปคุณภาพสูงที่ผ่านเกณฑ์ความยั่งยืน เน้นบริษัทที่มีความได้เปรียบเชิงแข่งขันและงบดุลแข็งแรง โดยมี valuation อยู่ในระดับต่ำกว่าหุ้นสหรัฐฯ',pe:16.8,pb:2.3,flow:180,bench:'MSCI Europe Index',
+   master:{name:'abrdn European Sustainable Equity',amc:'abrdn',aum:'€ 1.4B',incep:'มี.ค. 2019',te:3.1,pm:'ยุโรปมี valuation อยู่ในระดับต่ำกว่าสหรัฐฯ และมีแรงหนุนจากการฟื้นตัวของภาคการเงิน พอร์ตเน้นหุ้นคุณภาพที่จ่ายกระแสเงินสดสม่ำเสมอ'},
+   top:[['ASML','ASML',6.8,9.8],['Finecobank','FBK',5.2,14.1],['Prudential','PRU',3.9,-2.3],['Hiscox','HSX',3.8,11.7],['LSE Group','LSEG',3.6,8.2],['Novo Nordisk','NOVO',3.4,-18.5],['SAP','SAP',3.1,27.4],['Schneider','SU',2.8,15.0],['Nestlé','NESN',2.5,-4.6],['ASM Intl','ASM',2.3,19.2]]},
+ 'SPDR Gold Shares':{theme:'Gold (สินทรัพย์ปลอดภัย)',narr:'ทองคำแท่ง สินทรัพย์ปลอดภัยที่ป้องกันความเสี่ยงเงินเฟ้อและความไม่แน่นอนทางภูมิรัฐศาสตร์ ได้แรงหนุนจากการซื้อของธนาคารกลางทั่วโลก',pe:null,pb:null,flow:5210,bench:'LBMA Gold Price',
+   master:{name:'SPDR Gold Shares (GLD)',amc:'State Street',aum:'US$ 78.4B',incep:'พ.ย. 2004',te:0.09,pm:'ทองคำทำจุดสูงสุดใหม่จากการอ่อนค่าของดอลลาร์และความต้องการสินทรัพย์ปลอดภัย ธนาคารกลางยังเป็นผู้ซื้อสุทธิต่อเนื่อง'},
+   top:[['Physical Gold Bullion','GOLD',100.0,21.0]]},
+ // offshore themes (key = themes[0])
+ 'สุขภาพ':{theme:'Global Healthcare',narr:'เมกะเทรนด์การดูแลสุขภาพระยะยาวจากสังคมสูงวัยและนวัตกรรมยา เช่น ยาลดน้ำหนัก (GLP-1) และเทคโนโลยีชีวภาพ',pe:22.4,pb:4.1,flow:430,bench:'MSCI World Health Care',
+   master:{name:'MSCI World Health Care Index',amc:'ดัชนีอ้างอิง',aum:'—',incep:'—',te:1.2,pm:'ธีมเฮลท์แคร์ได้แรงหนุนจากยา GLP-1 และดีมานด์ยาในตลาดเกิดใหม่ แม้เผชิญแรงกดดันด้านราคายาในสหรัฐฯ'},
+   top:[['Eli Lilly','LLY',6.2,33.5],['UnitedHealth','UNH',5.1,-8.2],['Novo Nordisk','NOVO',4.7,-18.5],['J&J','JNJ',4.0,6.1],['AbbVie','ABBV',3.6,14.7],['Merck','MRK',3.2,-5.4],['Roche','ROG',2.9,11.2],['AstraZeneca','AZN',2.7,9.8],['Thermo Fisher','TMO',2.4,-3.1],['Abbott','ABT',2.2,8.5]]},
+ 'จีน':{theme:'China A-Shares',narr:'หุ้นจีนแผ่นดินใหญ่ (A-Shares) เข้าถึงการบริโภคในประเทศและผู้นำ EV/แบตเตอรี่ ราคาถูกเชิง valuation หลังปรับฐานยาว',pe:12.1,pb:1.4,flow:760,bench:'CSI 300 Index',
+   master:{name:'CSI 300 Index (อ้างอิง)',amc:'ดัชนีอ้างอิง',aum:'—',incep:'—',te:1.6,pm:'มาตรการกระตุ้นเศรษฐกิจของจีนเริ่มเห็นผล ภาคบริโภคและ EV ฟื้นตัว แต่ความเสี่ยงภูมิรัฐศาสตร์ยังกดดัน sentiment'},
+   top:[['Kweichow Moutai','600519',5.8,-6.2],['CATL','300750',4.9,18.4],['Ping An','601318',3.6,9.1],['Midea','000333',3.1,14.7],['BYD','002594',2.9,22.5],['CM Bank','600036',2.6,11.2],['Wuliangye','000858',2.2,-8.5],['LONGi','601012',1.9,-15.3],['Zijin Mining','601899',1.8,26.1],['East Money','300059',1.6,7.4]]},
+ 'หุ้นโลก':{theme:'Global Equity',narr:'กระจายลงทุนหุ้นทั่วโลก ตัวเลือกครบจบสำหรับพอร์ตหลัก ลดความเสี่ยงเฉพาะประเทศและกระจายไปยังหลายอุตสาหกรรม',pe:19.5,pb:3.0,flow:520,bench:'MSCI ACWI',
+   master:{name:'MSCI ACWI (อ้างอิง)',amc:'ดัชนีอ้างอิง',aum:'—',incep:'—',te:2.4,pm:'ตลาดหุ้นโลกยังได้แรงหนุนจากหุ้นเทคสหรัฐฯ เราคงน้ำหนักหุ้นคุณภาพและกระจายไปยังตลาดพัฒนาแล้วนอกสหรัฐฯ เพื่อลดการกระจุกตัว'},
+   top:[['Microsoft','MSFT',3.4,18.9],['Apple','AAPL',3.0,12.1],['NVIDIA','NVDA',2.9,62.4],['Amazon','AMZN',2.2,22.7],['Meta','META',1.7,35.6],['Alphabet','GOOGL',1.5,15.3],['Novo Nordisk','NOVO',1.2,-18.5],['TSMC','TSM',1.1,31.5],['Broadcom','AVGO',1.0,41.2],['JPMorgan','JPM',0.9,13.8]]},
+ 'ตราสารหนี้':{theme:'Global Bond',narr:'ตราสารหนี้ทั่วโลกคุณภาพสูง สร้างรายได้สม่ำเสมอและลดความผันผวนพอร์ต ได้ประโยชน์เมื่อดอกเบี้ยอยู่ในช่วงขาลง',pe:null,pb:null,flow:260,bench:'Bloomberg Global Aggregate',
+   master:{name:'Bloomberg Global Aggregate (อ้างอิง)',amc:'ดัชนีอ้างอิง',aum:'—',incep:'—',te:0.9,pm:'วัฏจักรดอกเบี้ยขาลงหนุนราคาตราสารหนี้ เราเพิ่ม duration ในพันธบัตรคุณภาพสูงเพื่อรับ capital gain'},
+   top:[['US Treasury 10Y','UST10',6.0,3.2],['German Bund','BUND',4.2,2.1],['US Treasury 5Y','UST5',3.8,2.8],['UK Gilt 10Y','GILT',2.6,1.4],['JGB 10Y','JGB',2.1,-0.6],['US TIPS','TIPS',1.9,3.0],['France OAT','OAT',1.6,1.1],['Canada 10Y','CAN',1.4,2.2],['Australia 10Y','ACGB',1.2,1.8],['Corp IG','IG',1.0,4.1]]},
+ // thai themes (key = themes[1])
+ 'คัดเลือกเชิงรุก (Active)':{theme:'Thai Active Equity',narr:'กองหุ้นไทยบริหารเชิงรุก ผู้จัดการคัดหุ้นพื้นฐานดีเพื่อมุ่งเอาชนะดัชนี SET เหมาะกับผู้เชื่อในการคัดเลือกหุ้นรายตัว',pe:15.8,pb:1.5,flow:-180,bench:'SET Index',
+   master:{name:'SET Total Return Index (อ้างอิง)',amc:'ดัชนีอ้างอิง',aum:'—',incep:'—',te:4.5,pm:'ตลาดหุ้นไทยฟื้นตัวช้าตามเศรษฐกิจในประเทศ เราเน้นหุ้นที่มีกำไรเติบโตชัดเจนและได้ประโยชน์จากการท่องเที่ยว'},
+   top:[['DELTA','DELTA',8.4,-12.0],['GULF','GULF',6.1,9.5],['PTT','PTT',5.2,-3.1],['ADVANC','ADVANC',4.8,14.2],['KBANK','KBANK',4.2,11.6],['CPALL','CPALL',3.8,7.9],['AOT','AOT',3.4,-6.4],['SCB','SCB',3.0,10.1],['BDMS','BDMS',2.7,4.3],['GPSC','GPSC',2.2,-8.7]]},
+ 'ดัชนี (Index)':{theme:'SET50 Index',narr:'ลงทุนล้อดัชนี SET50 หุ้นใหญ่ 50 ตัวของไทย ค่าธรรมเนียมต่ำ โปร่งใส เหมาะเป็นพอร์ตแกน (core) ของหุ้นไทย',pe:16.2,pb:1.6,flow:340,bench:'SET50 Index',
+   master:{name:'SET50 Total Return Index (อ้างอิง)',amc:'ดัชนีอ้างอิง',aum:'—',incep:'—',te:0.4,pm:'กองดัชนีเน้นล้อตามตลาด เหมาะเป็นพอร์ตแกนต้นทุนต่ำ ความเบี่ยงเบนจากดัชนี (tracking error) อยู่ในระดับต่ำมาก'},
+   top:[['DELTA','DELTA',10.1,-12.0],['AOT','AOT',6.4,-6.4],['PTT','PTT',5.9,-3.1],['ADVANC','ADVANC',5.2,14.2],['CPALL','CPALL',4.7,7.9],['GULF','GULF',4.3,9.5],['KBANK','KBANK',4.0,11.6],['BDMS','BDMS',3.6,4.3],['PTTEP','PTTEP',3.2,-5.5],['SCB','SCB',3.0,10.1]]},
+ 'ปันผลสูง':{theme:'High Dividend (SETHD)',narr:'หุ้นไทยที่จ่ายปันผลสูงสม่ำเสมอ สร้างกระแสเงินสดระหว่างถือครอง เหมาะกับผู้ต้องการรายได้ประจำและความผันผวนต่ำ',pe:12.9,pb:1.2,flow:240,bench:'SETHD Index',
+   master:{name:'SET High Dividend 30 (อ้างอิง)',amc:'ดัชนีอ้างอิง',aum:'—',incep:'—',te:2.0,pm:'หุ้นปันผลสูงมักเป็นกลุ่มพลังงานและธนาคารที่กระแสเงินสดแข็งแรง ให้ผลตอบแทนรวมสม่ำเสมอในภาวะตลาดผันผวน'},
+   top:[['PTT','PTT',6.8,-3.1],['ADVANC','ADVANC',6.0,14.2],['KTB','KTB',5.1,18.9],['INTUCH','INTUCH',4.4,12.1],['TISCO','TISCO',3.9,6.5],['SCB','SCB',3.6,10.1],['TTB','TTB',3.2,8.0],['BBL','BBL',3.0,5.4],['RATCH','RATCH',2.6,-4.2],['LH','LH',2.3,-7.1]]},
+ 'หุ้นเล็ก-กลาง':{theme:'Thai Mid/Small Cap',narr:'หุ้นขนาดกลาง-เล็กของไทยที่กำลังเติบโต ให้โอกาสสร้างผลตอบแทนสูง แลกกับความผันผวนที่มากขึ้นกว่าหุ้นขนาดใหญ่',pe:18.4,pb:1.8,flow:120,bench:'sSET Index',
+   master:{name:'sSET Index (อ้างอิง)',amc:'ดัชนีอ้างอิง',aum:'—',incep:'—',te:5.2,pm:'หุ้นเล็ก-กลางให้ผลตอบแทนกระจายตัวสูง การคัดเลือกรายตัวสำคัญมาก เราเน้นบริษัทที่กำไรเติบโตและมีสภาพคล่องเพียงพอ'},
+   top:[['BJC','BJC',4.2,3.1],['COM7','COM7',3.8,-9.4],['BCH','BCH',3.3,5.6],['AMATA','AMATA',3.0,12.7],['SPA','SPA',2.7,-4.1],['SAPPE','SAPPE',2.5,18.2],['TIDLOR','TIDLOR',2.3,7.9],['ORI','ORI',2.0,-14.5],['Sabuy','SABUY',1.8,2.2],['MEGA','MEGA',1.6,9.0]]}
+};
+
+/* ================= STATE ================= */
+let pins;try{pins=JSON.parse(localStorage.getItem('fi321-pins'))||['SCBNDQ','TNDQ']}catch(e){pins=['SCBNDQ','TNDQ']}
+const state={tab:'feeder',scope:null,scopeMode:'sector',themeSelections:[],stockScopeSelections:[],themeView:'interesting',search:'',rk:{flow:'m1',ret:'y1'},groups:[],filt:{},quick:{wrapper:'',amc:'',dividend:'',minInvest:''},metric:{},metricOpen:new Set(),sort:{key:'risk',dir:'asc'},advOpen:false,open:new Set()};
+let ENTS=[],SCOPES=[]; const charts={};
+try{if(window.Chart){Chart.defaults.color='#8090ad';Chart.defaults.font.family='Inter,Prompt,sans-serif';}}catch(e){}
+
+/* ================= helpers ================= */
+const sid=s=>String(s).replace(/[^a-zA-Z0-9]/g,'_');
+const money=n=>(Math.abs(n)>=1000?(n/1000).toFixed(2)+' พันล.':n+' ลบ.');
+const pct=n=>`<span class="num font-bold ${n<0?'text-neg-600':'text-pos-600'}">${n>0?'+':''}${n}%</span>`;
+const flowH=n=>`<span class="num font-bold ${n<0?'text-neg-600':'text-pos-600'}">${n>0?'+':''}฿${money(n)}</span>`;
+const isStockTab=()=>state.tab==='offshore'||state.tab==='thai';
+const isDirectEquityFund=f=>f.top5.some(h=>STOCK_META[h[0]]);
+const baseFunds=()=>FUNDS.filter(f=>f.type===state.tab&&(!isStockTab()||isDirectEquityFund(f)));
+const funds=()=>{const fs=baseFunds();if(state.tab==='feeder'&&state.themeSelections.length){const seen=new Map();state.themeSelections.forEach(id=>{const sc=SCOPES.find(s=>s.id===id);if(sc)sc.members.forEach(f=>seen.set(f.id,f));});return[...seen.values()];}if(isStockTab()&&state.stockScopeSelections.length){const seen=new Map();state.stockScopeSelections.forEach(id=>{const sc=SCOPES.find(s=>s.id===id);if(sc)sc.members.forEach(f=>seen.set(f.id,f));});return[...seen.values()];}if(!state.scope)return fs;const sc=SCOPES.find(s=>s.id===state.scope);return sc?sc.members.slice():fs;};
+const isPin=id=>pins.includes(id);
+function savePins(){try{localStorage.setItem('fi321-pins',JSON.stringify(pins))}catch(e){}}
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
+function starEl(id){return `<span class="star ${isPin(id)?'on':''}" data-pin="${id}" onclick="event.stopPropagation();togglePin('${id}')">${isPin(id)?'★':'☆'}</span>`;}
+function avatar(txt,color,sz){sz=sz||34;const fs=txt.length>3?9:txt.length>2?10:12;return `<span class="lg" style="width:${sz}px;height:${sz}px;background:${color};font-size:${fs}px">${txt}</span>`;}
+const AVCOL=['#2456d8','#0e7ac0','#0e9f6e','#e0a411','#7a5af5','#e2557a','#0891b2','#d97706'];
+const avColor=s=>AVCOL[[...s].reduce((a,c)=>a+c.charCodeAt(0),0)%AVCOL.length];
+function riskBadge(r){return `<span class="num text-[11px] font-bold px-2 py-0.5 rounded-md" style="background:var(--surf2);color:var(--sub)">ความเสี่ยง ${r}/8</span>`;}
+function walk(seed,fin,n){n=n||13;const out=[];let s=seed;for(let i=0;i<n;i++){s=(s*9301+49297)%233280;const noise=(s/233280-0.5)*7;out.push(+(100*(1+(fin/100)*(i/(n-1)))+noise).toFixed(1));}return out;}
+const GOLD='#e0a411';
+function hbarsHTML(arr,color){arr=(arr||[]).slice(0,5);if(!arr.length)return '<span class="text-[11px] sub">—</span>';const mx=Math.max(...arr.map(a=>a[1]));
+  return arr.map(a=>`<div class="flex items-center gap-1.5 mb-1"><span class="w-24 shrink-0 text-[10px] sub truncate" title="${a[0]}">${a[0]}</span><span class="flex-1 h-2.5 rounded-full surf2 overflow-hidden"><span class="block h-full rounded-full" style="width:${Math.max(6,a[1]/mx*100)}%;background:${color}"></span></span><span class="num w-9 text-right text-[10px] font-bold">${a[1]}%</span></div>`).join('');}
+const SEGC=['#2456d8','#0e7ac0','#12b76a','#e0a411','#7a5af5','#e2557a','#0891b2','#f04438','#64748b','#b0b9cc'];
+function stackBar(arr){const seg=arr.map((a,i)=>`<span title="${a[0]} ${a[2]}%" style="width:${a[2]}%;background:${SEGC[i%SEGC.length]}" class="h-full inline-block"></span>`).join('');
+  const leg=arr.slice(0,6).map((a,i)=>`<span class="inline-flex items-center gap-1 text-[10px] sub mr-2 mb-0.5"><span class="w-2 h-2 rounded-full" style="background:${SEGC[i%SEGC.length]}"></span>${a[0]} ${a[2]}%</span>`).join('');
+  return `<div class="h-3.5 rounded-full overflow-hidden flex surf2 mb-1.5" title="สัดส่วนน้ำหนักของ Top Holdings ในพอร์ต">${seg}</div><div class="flex flex-wrap">${leg}</div>`;}
+const pdfLink=(label)=>`<a href="#" onclick="event.preventDefault();alert('ตัวอย่าง: เปิดเอกสาร ${label} (PDF)')" class="inline-flex items-center gap-1.5 text-[11px] font-semibold" style="color:var(--brand)"><span class="lg" style="width:22px;height:20px;background:#dc2626;font-size:8px">PDF</span>${label}</a>`;
+
+/* ================= TABS ================= */
+function renderTabs(){document.getElementById('tabs').innerHTML=Object.entries(TYPES).map(([k,t])=>{const on=state.tab===k;
+  return `<button onclick="setTab('${k}')" class="tab ${on?'text-white cs':'sub hover:opacity-80'}" style="${on?`background:${t.acc}`:''}">${t.emoji} ${t.label}</button>`;}).join('');}
+function setTab(k){state.tab=k;state.scope=null;state.scopeMode=k==='offshore'?'region':k==='thai'?'thaiIndustry':'sector';state.themeSelections=[];state.stockScopeSelections=[];state.themeView='interesting';state.search='';state.groups=[];state.filt={};state.quick={wrapper:'',amc:'',dividend:'',minInvest:''};state.metric={};state.metricOpen=new Set();state.sort={key:'risk',dir:'asc'};state.advOpen=false;state.open=new Set();document.getElementById('search').value='';autoSelect();render();window.scrollTo({top:0,behavior:'smooth'});}
+
+/* ================= ENTITIES ================= */
+function selectedScopeStocks(scope){const ids=Array.isArray(scope)?scope:scope?[scope]:[],names=new Set();ids.forEach(id=>{const sc=SCOPES.find(s=>s.id===id);if(sc)(sc.stocks||[]).forEach(name=>names.add(name));});return names;}
+function buildStockEntities(fs,scope){const g={},scopeSet=selectedScopeStocks(scope);
+  fs.forEach(f=>(f.top5||[]).forEach(([name,weight])=>{const meta=STOCK_META[name];if(!meta||scopeSet.size&&!scopeSet.has(name))return;const x=g[name]||(g[name]={id:name,name,ticker:meta.ticker,sector:meta.sector,country:meta.country,meta,holdings:[],membersMap:new Map(),totalWeight:0});x.holdings.push({fund:f,weight});x.membersMap.set(f.id,f);x.totalWeight+=weight;}));
+  return Object.values(g).map((x,i)=>{const members=[...x.membersMap.values()],ret=x.meta.ret;return{idx:i,kind:'stock',id:x.id,title:`${x.ticker} · ${x.name}`,name:x.name,ticker:x.ticker,sector:x.sector,country:x.country,meta:x.meta,holdings:x.holdings,members,totalWeight:+x.totalWeight.toFixed(1),avgWeight:+(x.totalWeight/members.length).toFixed(1),fundCount:members.length,perf:ret,pop:members.reduce((s,f)=>s+f.pop,0),div:x.meta.div,flowP:{w1:x.totalWeight,m1:x.totalWeight,y1:x.totalWeight},retP:{m1:+(ret*.16).toFixed(1),q1:+(ret*.42).toFixed(1),y1:ret,y3:+(ret*.76).toFixed(1),y5:+(ret*.68).toFixed(1)}};});
+}
+function computeScopes(){const fs=baseFunds(),g={};
+  const add=(k,f)=>{if(!k)return;(g[k]=g[k]||[]).push(f);};
+  if(state.tab==='feeder')fs.forEach(f=>add((INSIGHT[f.master]||{}).theme||f.themes[0],f));
+  else if(isStockTab()){SCOPES=stockTaxonomy().map((def,i)=>{let members=[],stockNames=[];if(def.fundIds){members=fs.filter(f=>def.fundIds.includes(f.id));stockNames=[...new Set(members.flatMap(f=>(f.top5||[]).map(h=>h[0])).filter(name=>STOCK_META[name]))];}else{const wanted=new Set(def.stocks||[]);stockNames=[...wanted].filter(name=>STOCK_META[name]&&fs.some(f=>(f.top5||[]).some(h=>h[0]===name)));members=fs.filter(f=>(f.top5||[]).some(h=>wanted.has(h[0])));}const memberIds=new Set(members.map(f=>f.id));let exposure=0,weightedReturn=0;fs.forEach(f=>(f.top5||[]).forEach(([name,weight])=>{if(!STOCK_META[name]||!stockNames.includes(name)||def.fundIds&&!memberIds.has(f.id))return;exposure+=weight;weightedReturn+=weight*STOCK_META[name].ret;}));const hasData=exposure>0;return{id:def.id,title:def.title,subtitle:def.subtitle,idx:i,members,stocks:stockNames,stockCount:stockNames.length,exposure:+exposure.toFixed(1),perf:hasData?+(weightedReturn/exposure).toFixed(1):null,flow:+exposure.toFixed(1),hasData};});state.stockScopeSelections=state.stockScopeSelections.filter(id=>SCOPES.some(s=>s.id===id&&s.hasData));state.scope=null;return;}
+  else fs.forEach(f=>(f.mix||f.asset||[]).filter(a=>a[1]>=10).forEach(a=>add(a[0],f)));
+  SCOPES=Object.entries(g).map(([k,ms],i)=>{const uniq=[...new Map(ms.map(f=>[f.id,f])).values()];return{id:k,title:k,idx:i,members:uniq,perf:+(uniq.reduce((s,f)=>s+f.perf,0)/uniq.length).toFixed(1),flow:uniq.reduce((s,f)=>s+f.netbuy,0)};});
+  if(state.tab==='feeder')state.themeSelections=state.themeSelections.filter(id=>SCOPES.some(s=>s.id===id));
+  if(state.scope&&!SCOPES.some(s=>s.id===state.scope))state.scope=null;
+}
+function computeEntities(){const fs=funds();
+  if(isStockTab()){ENTS=buildStockEntities(baseFunds(),state.stockScopeSelections);return;}
+  if(state.tab==='mixed'){ENTS=fs.map((f,i)=>({idx:i,kind:'fund',id:f.id,title:f.name,members:[f],perf:f.perf,pop:f.pop,div:f.div,flowP:f.flowP,retP:f.retP}));return;}
+  const key=f=>f.master;
+  const g={};fs.forEach(f=>{const k=key(f);(g[k]=g[k]||[]).push(f);});
+  const avg=a=>+(a.reduce((s,x)=>s+x,0)/a.length).toFixed(1),sum=a=>a.reduce((s,x)=>s+x,0);
+  ENTS=Object.entries(g).map(([k,ms],i)=>{const flowP={},retP={};['w1','m1','y1'].forEach(p=>flowP[p]=sum(ms.map(m=>m.flowP[p])));['m1','q1','y1','y3','y5'].forEach(p=>retP[p]=avg(ms.map(m=>m.retP[p])));
+    return{idx:i,kind:state.tab==='feeder'?'master':'theme',id:k,title:k,members:ms,perf:avg(ms.map(m=>m.perf)),pop:sum(ms.map(m=>m.pop)),div:Math.max(...ms.map(m=>m.div)),flowP,retP};});}
+function autoSelect(){computeScopes();computeEntities();state.groups=[];}
+
+/* ================= SECTION 1: THEME / SECTOR TREND ================= */
+function setScope(id){if(isStockTab()){if(!id)state.stockScopeSelections=[];else{const at=state.stockScopeSelections.indexOf(id);if(at>-1)state.stockScopeSelections.splice(at,1);else if(state.stockScopeSelections.length<5)state.stockScopeSelections.push(id);else{alert('เลือกเปรียบเทียบได้สูงสุด 5 กลุ่ม');return;}}state.scope=null;}else state.scope=id||null;state.groups=[];state.open=new Set();render();}
+function setScopeMode(mode){state.scopeMode=mode;state.scope=null;state.stockScopeSelections=[];state.groups=[];state.open=new Set();render();}
+function setThemeView(view){state.themeView=view;render();}
+function toggleThemeChoice(id){const at=state.themeSelections.indexOf(id);if(at>-1)state.themeSelections.splice(at,1);else if(state.themeSelections.length<7)state.themeSelections.push(id);else{alert('เลือกธีมได้สูงสุด 7 รายการ');return;}state.groups=[];state.open=new Set();render();}
+function clearThemeChoices(){state.themeSelections=[];state.groups=[];state.open=new Set();render();}
+function filterThemeCards(value){const q=value.trim().toLowerCase();document.querySelectorAll('[data-theme-search]').forEach(el=>el.classList.toggle('hidden',q&&!el.dataset.themeSearch.includes(q)));}
+function themePulseStats(scope,index){const series=trendSeries(scope),members=scope.members,m1=+(members.reduce((s,f)=>s+f.retP.m1,0)/members.length).toFixed(1),q1=+(members.reduce((s,f)=>s+f.retP.q1,0)/members.length).toFixed(1),prior=+(series.at(-4)-series.at(-7)).toFixed(1),momentum=+(series.at(-1)-series.at(-4)).toFixed(1),flow=members.reduce((s,f)=>s+f.flowP.m1,0);return{scope,index,series,m1,q1,prior,momentum,accel:+(momentum-prior).toFixed(1),flow,vsGlobal:+(scope.perf-GLOBAL_RETURN).toFixed(1),fundCount:members.length,sparkColor:scope.perf>=0?'#0e9f6e':'#dc2626'};}
+function themeStatus(s){if(s.momentum>0&&s.accel>1)return{label:'↗ เร่งขึ้น',bg:'#ecfdf3',color:'#047857'};if(s.momentum>0&&s.accel<-1)return{label:'→ บวกแต่ชะลอ',bg:'#f4f0ff',color:'#6941c6'};if(s.momentum<0&&s.accel>1)return{label:'↗ เริ่มฟื้น',bg:'#fff7e6',color:'#b45309'};if(s.momentum<0)return{label:'↘ อ่อนตัว',bg:'#fef3f2',color:'#dc2626'};return{label:'→ ทรงตัว',bg:'var(--surf2)',color:'var(--sub)'};}
+function buildThemePulseCharts(stats){stats.forEach(s=>{const id='theme-spark-'+sid(s.scope.id),el=document.getElementById(id);if(!el)return;destroyChart(id);charts[id]=new Chart(el,{type:'line',data:{labels:CMP_LABELS,datasets:[{data:s.series,borderColor:s.sparkColor,backgroundColor:s.sparkColor+'18',borderWidth:2.2,pointRadius:0,tension:.32,fill:true}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}});});}
+function buildThemeDetailChart(selected){const id='scope-trend-chart',el=document.getElementById(id);if(!el)return;destroyChart(id);const datasets=selected.map((s,i)=>({label:`${i+1}. ${s.scope.title}`,data:s.series,borderColor:COMPARE_COLORS[i],backgroundColor:COMPARE_COLORS[i],borderWidth:2.7,borderDash:COMPARE_DASH[i],pointRadius:0,pointHoverRadius:4,tension:.3,fill:false}));datasets.push({label:'MSCI ACWI · จุดอ้างอิง',data:performanceSeries(731,GLOBAL_RETURN,CMP_LABELS.length),borderColor:'#7b879d',backgroundColor:'#7b879d',borderWidth:2,borderDash:[6,4],pointRadius:0,pointHoverRadius:4,tension:.3,fill:false});charts[id]=new Chart(el,{type:'line',data:{labels:CMP_LABELS,datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,pointStyle:'line',boxWidth:22,font:{size:9}}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${(c.parsed.y-100).toFixed(1)}%`}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:7}},y:{ticks:{font:{size:9},callback:v=>(v-100)+'%'},grid:{color:'rgba(148,163,184,.15)'}}}}});}
+function renderThemePulse(wrap){const stats=SCOPES.map(themePulseStats),accelerating=stats.filter(s=>s.accel>1).length,outperform=stats.filter(s=>s.vsGlobal>0).length,positive=stats.filter(s=>s.scope.perf>0).length,interesting=[...stats].sort((a,b)=>b.q1-a.q1||b.flow-a.flow).slice(0,3),displayStats=state.themeView==='interesting'?interesting:stats,selected=state.themeSelections.map(id=>stats.find(s=>s.scope.id===id)).filter(Boolean);
+  const cards=displayStats.map(s=>{const status=themeStatus(s),order=state.themeSelections.indexOf(s.scope.id),positive1Y=s.scope.perf>=0;return`<button data-theme-search="${(s.scope.title+' '+s.scope.members.map(f=>f.master).join(' ')).toLowerCase()}" onclick="toggleThemeChoice('${s.scope.id.replace(/'/g,"\\'")}')" class="theme-pulse-card ${order>-1?'on':''}" aria-label="${order>-1?'นำออก':'เลือก'}ธีม ${s.scope.title}"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-[9px] sub font-bold">THEME ${order>-1?`· เลือกลำดับ ${order+1}`:''}</div><div class="text-[12px] font-extrabold truncate" title="${s.scope.title}">${s.scope.title}</div></div><div class="flex items-center gap-1">${order>-1?`<span class="select-order">${order+1}</span>`:''}<span class="trend-status" style="background:${status.bg};color:${status.color}">${status.label}</span></div></div><div class="h-16 mt-1"><canvas id="theme-spark-${sid(s.scope.id)}" aria-label="แนวโน้ม 1 ปี ${s.scope.title} สี${positive1Y?'เขียว':'แดง'}"></canvas></div><div class="text-[8px] font-bold mb-1" style="color:${s.sparkColor}">1YTD</div><div class="grid grid-cols-3 gap-1.5 mb-2"><div class="metric-cell"><div class="text-[8px] sub">1M</div><div class="text-[11px]">${pct(s.m1)}</div></div><div class="metric-cell"><div class="text-[8px] sub">3M</div><div class="text-[11px]">${pct(s.q1)}</div></div><div class="metric-cell"><div class="text-[8px] sub">1Y</div><div class="text-[11px]">${pct(s.scope.perf)}</div></div></div><div class="grid grid-cols-3 gap-2 text-[8px] sub"><span>vs Global<br><b class="num" style="color:${s.vsGlobal>=0?'#059669':'#dc2626'}">${s.vsGlobal>0?'+':''}${s.vsGlobal}%</b></span><span>Fund Flow 1M<br><b class="num" style="color:var(--txt)">${s.flow>0?'+':''}฿${money(s.flow)}</b></span><span>กองทุนไทย<br><b class="num" style="color:var(--txt)">${s.fundCount} กอง</b></span></div></button>`;}).join('');
+  const chosen=selected.length?`<div class="flex items-center gap-1.5 flex-wrap mt-3"><span class="text-[9px] font-bold sub">ธีมที่เลือก ${selected.length}/7:</span>${selected.map((s,i)=>`<button onclick="toggleThemeChoice('${s.scope.id.replace(/'/g,"\\'")}')" class="scope-chip on" style="background:${COMPARE_COLORS[i]};border-color:${COMPARE_COLORS[i]}">${i+1}. ${s.scope.title} ✕</button>`).join('')}<button onclick="clearThemeChoices()" class="text-[9px] font-bold px-2 py-1">ล้างทั้งหมด</button></div>`:'';
+  const detail=selected.length?`<div class="mt-3 pt-3 brdt slide"><div class="flex items-center justify-between gap-2 mb-2"><div><b class="text-[12px]">เปรียบเทียบ ${selected.length} ธีมบนกราฟเดียวกัน</b><div class="text-[9px] sub">สีประจำธีมเริ่มใช้ในกราฟนี้ เพื่อแยกเส้นตามลำดับที่เลือก</div></div><button onclick="clearThemeChoices()" class="text-[9px] font-bold px-2.5 py-1 rounded-lg surf2 brd">ล้างกราฟ ✕</button></div><div class="grid lg:grid-cols-[minmax(0,2fr)_minmax(260px,.75fr)] gap-3"><div class="h-72 surf2 brd rounded-xl p-2"><canvas id="scope-trend-chart" aria-label="กราฟเปรียบเทียบธีมที่เลือกกับ MSCI ACWI"></canvas></div><div class="surf2 brd rounded-xl p-3"><div class="text-[10px] font-bold mb-2">ธีมในกราฟ</div><div class="space-y-2">${selected.map((s,i)=>`<div class="surf brd rounded-lg p-2"><div class="flex items-center gap-1.5"><span class="w-3 h-1 rounded-full" style="background:${COMPARE_COLORS[i]}"></span><b class="text-[9px] truncate">${i+1}. ${s.scope.title}</b></div><div class="grid grid-cols-3 gap-1 text-[8px] sub mt-1"><span>3M <b class="num" style="color:var(--txt)">${s.q1>0?'+':''}${s.q1}%</b></span><span>1Y <b class="num" style="color:var(--txt)">${s.scope.perf>0?'+':''}${s.scope.perf}%</b></span><span>vs Global <b class="num" style="color:var(--txt)">${s.vsGlobal>0?'+':''}${s.vsGlobal}%</b></span></div></div>`).join('')}</div><div class="text-[8px] sub mt-2 pt-2 brdt">เปรียบเทียบทิศทาง ไม่ใช่สัญญาณซื้อขาย</div></div></div></div>`:`<div class="mt-3 rounded-lg surf2 brd px-3 py-2 text-[9px] sub">เลือกได้หลายธีมจากการ์ดด้านบน แล้วระบบจะแสดงทุกธีมบนกราฟเดียวกันพร้อม MSCI ACWI</div>`;
+  const picker=state.themeView==='all'?`<div class="flex items-center gap-2 mb-3"><div class="flex-1 flex items-center gap-2 surf2 brd rounded-lg px-3 py-2"><span>🔎</span><input id="theme-search" aria-label="ค้นหาธีมหรือ Master Fund" oninput="filterThemeCards(this.value)" class="flex-1 bg-transparent outline-none text-[10px]" style="color:var(--txt)" placeholder="ค้นหาธีมหรือ Master Fund ที่สนใจ"></div><span class="text-[9px] sub">เลือกได้สูงสุด 7 ธีม</span></div>`:`<div class="text-[9px] sub mb-3">แสดง 3 ธีมที่มีโมเมนตัม 3 เดือนเด่นในข้อมูลตัวอย่าง ไม่ใช่คำแนะนำลงทุน</div>`;
+  wrap.innerHTML=`<div class="text-[11px] font-bold sub uppercase tracking-wide mb-1.5">① แนวโน้มธีมการลงทุน</div><div class="surf brd rounded-xl cs p-4"><div class="flex items-start justify-between gap-3 flex-wrap mb-3"><div><h2 class="text-[16px] font-extrabold">ภาพรวมแนวโน้มธีมการลงทุน</h2><p class="text-[10px] sub mt-0.5">ติดตามทิศทางและผลตอบแทนของธีมเด่น ก่อนเลือกเปรียบเทียบ Master Fund ในมุมมองเดียว</p></div><div class="flex gap-1.5 flex-wrap text-[9px]"><span class="px-2.5 py-1 rounded-full surf2 brd">บวก 1Y <b class="num">${positive}/${stats.length}</b></span><span class="px-2.5 py-1 rounded-full surf2 brd">เร่งขึ้น <b class="num">${accelerating}/${stats.length}</b></span><span class="px-2.5 py-1 rounded-full surf2 brd">เหนือ Global <b class="num">${outperform}/${stats.length}</b></span></div></div><div class="inline-flex surf2 brd rounded-lg p-0.5 mb-3"><button onclick="setThemeView('interesting')" class="px-3 py-1.5 rounded-md text-[10px] font-bold ${state.themeView==='interesting'?'text-white':''}" style="${state.themeView==='interesting'?'background:#2456d8':''}">ธีมที่น่าจับตา</button><button onclick="setThemeView('all')" class="px-3 py-1.5 rounded-md text-[10px] font-bold ${state.themeView==='all'?'text-white':''}" style="${state.themeView==='all'?'background:#2456d8':''}">เลือกธีมเอง</button></div>${picker}<div class="grid sm:grid-cols-2 lg:grid-cols-3 ${state.themeView==='all'?'xl:grid-cols-5':'xl:grid-cols-3'} gap-2.5">${cards}</div>${chosen}${detail}</div>`;
+  buildThemePulseCharts(displayStats);if(selected.length)buildThemeDetailChart(selected);else destroyChart('scope-trend-chart');
+}
+function holdingIcon(title){const map={สุขภาพ:'🩺',การแพทย์:'🩺',เทคโนโลยี:'💻','เทคโนโลยีและสื่อสาร':'📡',สื่อสาร:'📡',การเงิน:'🏦',อุตสาหกรรม:'🏭','นิคมอุตสาหกรรม':'🏭','สินค้าอุปโภคบริโภค':'🛍️',พาณิชย์:'🛒','พลังงานและสาธารณูปโภค':'⚡',อิเล็กทรอนิกส์:'🔌','ขนส่งและท่องเที่ยว':'✈️','หุ้นโลก':'🌐','หุ้นสหรัฐฯ':'🇺🇸','หุ้นจีน':'🇨🇳','หุ้นเวียดนาม':'🇻🇳','หุ้นอินเดีย':'🇮🇳','หุ้นญี่ปุ่น':'🇯🇵','หุ้นยุโรป':'🇪🇺','หุ้นเกาหลี':'🇰🇷','ตลาดเกิดใหม่':'🌍','เทคโนโลยีภาพรวม':'💻','ปัญญาประดิษฐ์และหุ่นยนต์':'🤖','เซมิคอนดักเตอร์':'🔌','นวัตกรรมสุขภาพ':'🧬','พลังงานสะอาดและรถยนต์ไฟฟ้า':'⚡','สินค้าแบรนด์เนมและสินค้าฟุ่มเฟือย':'💎','ความปลอดภัยทางไซเบอร์':'🛡️','โครงสร้างพื้นฐานทั่วโลก':'🏗️','อสังหาริมทรัพย์ทั่วโลก':'🏢','เกษตรและอุตสาหกรรมอาหาร':'🌾','ธุรกิจการเงิน':'🏦','สินค้าอุตสาหกรรม':'🏭','อสังหาริมทรัพย์และก่อสร้าง':'🏗️',ทรัพยากร:'⚡',บริการ:'🧩',จีน:'🇨🇳','สหรัฐฯ':'🇺🇸',ไทย:'🇹🇭',ไต้หวัน:'🇹🇼',เดนมาร์ก:'🇩🇰',ฝรั่งเศส:'🇫🇷'};return map[title]||'◼';}
+function buildStockScopeChart(selected){const id='scope-trend-chart',el=document.getElementById(id);if(!el)return;destroyChart(id);const bench=compareBenchmark(),datasets=selected.map((s,i)=>({label:`${i+1}. ${s.title} · ตะกร้าหุ้นที่กองทุนถือ`,data:trendSeries(s),borderColor:COMPARE_COLORS[i],backgroundColor:COMPARE_COLORS[i],borderWidth:2.7,borderDash:COMPARE_DASH[i],pointRadius:0,pointHoverRadius:4,tension:.3,fill:false}));
+  datasets.push({label:`${bench.name} · จุดอ้างอิง`,data:performanceSeries(731,bench.ret,CMP_LABELS.length),borderColor:'#7b879d',backgroundColor:'#7b879d',borderWidth:2,borderDash:[6,4],pointRadius:0,pointHoverRadius:4,tension:.3,fill:false});
+  charts[id]=new Chart(el,{type:'line',data:{labels:CMP_LABELS,datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,pointStyle:'line',boxWidth:22,font:{size:9},padding:10}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${(c.parsed.y-100).toFixed(1)}%`}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:7}},y:{ticks:{font:{size:9},callback:v=>(v-100)+'%'},grid:{color:'rgba(148,163,184,.15)'}}}}});}
+function renderStockExposure(wrap){const foreign=state.tab==='offshore',label=state.tab==='thai'?'กลุ่มอุตสาหกรรม SET':state.scopeMode==='theme'?'เมกะเทรนด์และอุตสาหกรรม':'ภูมิภาคและประเทศ',stocks=buildStockEntities(baseFunds(),null),scopes=SCOPES.filter(s=>s.hasData),unavailable=SCOPES.filter(s=>!s.hasData),max=Math.max(...scopes.map(s=>s.exposure),1),mostHeld=[...stocks].sort((a,b)=>b.fundCount-a.fundCount||b.totalWeight-a.totalWeight)[0],top=[...scopes].sort((a,b)=>b.exposure-a.exposure)[0],leader=[...scopes].sort((a,b)=>b.perf-a.perf)[0],bench=compareBenchmark(),outperform=scopes.filter(s=>s.perf>bench.ret).length,selected=state.stockScopeSelections.map(id=>SCOPES.find(s=>s.id===id)).filter(s=>s&&s.hasData);
+  const cards=scopes.map(s=>{const order=state.stockScopeSelections.indexOf(s.id),color=order>-1?COMPARE_COLORS[order]:TYPES[state.tab].acc,gap=+(s.perf-bench.ret).toFixed(1);return`<button onclick="setScope('${s.id.replace(/'/g,"\\'")}')" class="theme-pulse-card ${order>-1?'on':''}" aria-label="${order>-1?'นำออกจาก':'เพิ่มลง'}กราฟเปรียบเทียบ ${s.title}"><div class="flex items-start gap-2"><span class="w-9 h-9 rounded-lg flex items-center justify-center text-lg" style="background:${color}18">${holdingIcon(s.title)}</span><div class="min-w-0 flex-1"><div class="text-[9px] sub">${s.subtitle}</div><div class="text-[12px] font-extrabold leading-snug">${s.title}</div><div class="text-[8px] sub">${s.stockCount} หุ้น · พบใน ${s.members.length} กองทุน</div></div>${order>-1?`<span class="select-order" style="background:${color}">${order+1}</span>`:''}</div><div class="grid grid-cols-2 gap-1.5 mt-3"><div class="metric-cell"><div class="text-[8px] sub">ผลตอบแทน 1Y</div><div class="num text-[12px] font-extrabold ${s.perf>=0?'text-pos-600':'text-neg-600'}">${s.perf>0?'+':''}${s.perf}%</div></div><div class="metric-cell"><div class="text-[8px] sub">เทียบ ${bench.short}</div><div class="num text-[12px] font-extrabold ${gap>=0?'text-pos-600':'text-neg-600'}">${gap>0?'+':''}${gap}%</div></div></div><div class="flex items-end justify-between gap-2 mt-2"><div><div class="text-[8px] sub">น้ำหนักหุ้นรวม</div><div class="num text-[15px] font-extrabold">${s.exposure.toFixed(1)}%</div></div><span class="text-[8px] font-bold" style="color:${color}">${order>-1?'เลือกแล้ว · กดเพื่อนำออก':'เลือกเปรียบเทียบ +'}</span></div><div class="h-1.5 rounded-full surf2 overflow-hidden mt-1.5"><span class="block h-full rounded-full" style="width:${Math.max(8,s.exposure/max*100)}%;background:${color}"></span></div></button>`;}).join('');
+  const mode=foreign?`<div class="flex items-center gap-2 flex-wrap"><span class="text-[9px] sub">มุมมอง:</span><div class="inline-flex surf2 brd rounded-lg p-0.5"><button onclick="setScopeMode('region')" class="px-3 py-1.5 rounded-md text-[10px] font-bold ${state.scopeMode==='region'?'text-white':''}" style="${state.scopeMode==='region'?`background:${TYPES[state.tab].acc}`:''}">ภูมิภาคและประเทศ</button><button onclick="setScopeMode('theme')" class="px-3 py-1.5 rounded-md text-[10px] font-bold ${state.scopeMode==='theme'?'text-white':''}" style="${state.scopeMode==='theme'?`background:${TYPES[state.tab].acc}`:''}">เมกะเทรนด์และอุตสาหกรรม</button></div></div>`:`<span class="text-[9px] font-bold px-2.5 py-1 rounded-full surf2 brd">มาตรฐาน SET · 8 Industry Groups</span>`;
+  const example=top?`ตัวอย่าง: ${top.title} มีน้ำหนักหุ้นรวม ${top.exposure.toFixed(1)}% จากหุ้นหลักของ ${top.members.length} กองทุน`:'นำเปอร์เซ็นต์หุ้นมารวมกัน';
+  const chosen=selected.length?`<div class="flex items-center gap-1.5 flex-wrap mt-3"><span class="text-[9px] font-bold sub">กลุ่มที่เลือก ${selected.length}/5:</span>${selected.map((s,i)=>`<button onclick="setScope('${s.id.replace(/'/g,"\\'")}')" class="scope-chip on" style="background:${COMPARE_COLORS[i]};border-color:${COMPARE_COLORS[i]}">${i+1}. ${s.title} ✕</button>`).join('')}<button onclick="setScope(null)" class="text-[9px] font-bold px-2 py-1">ล้างทั้งหมด</button></div>`:'';
+  const detail=selected.length?`<div class="mt-3 pt-3 brdt slide"><div class="flex items-start justify-between gap-3 flex-wrap mb-2"><div><b class="text-[12px]">เปรียบเทียบ Performance ${selected.length} กลุ่มบนกราฟเดียวกัน</b><div class="text-[9px] sub">ผลตอบแทนแบบฐาน 100 ย้อนหลัง 12 เดือน · เส้นประคือ ${bench.name}</div></div><button onclick="setScope(null)" class="text-[9px] font-bold px-2.5 py-1 rounded-lg surf2 brd">ล้างกราฟ ✕</button></div><div class="chart-note rounded-lg px-3 py-2 mb-2 flex items-center gap-2 flex-wrap"><span class="w-6 border-t-2 border-dashed" style="border-color:#7b879d"></span><b class="text-[10px]">จุดอ้างอิง: ${bench.name}</b><span class="text-[9px] sub">Performance คำนวณจากตะกร้าหุ้นที่พบใน Top Holdings ไม่ใช่ดัชนีหมวดอย่างเป็นทางการ</span></div><div class="grid lg:grid-cols-[minmax(0,2fr)_minmax(260px,.75fr)] gap-3"><div class="h-72 surf2 brd rounded-xl p-2"><canvas id="scope-trend-chart" aria-label="กราฟเปรียบเทียบ ${selected.map(s=>s.title).join(', ')} กับ ${bench.name}"></canvas></div><aside class="surf2 brd rounded-xl p-3"><div class="text-[10px] font-bold mb-2">กลุ่มในกราฟ</div><div class="space-y-2">${selected.map((s,i)=>{const gap=+(s.perf-bench.ret).toFixed(1);return`<div class="surf brd rounded-lg p-2"><div class="flex items-center gap-1.5"><span class="w-3 h-1 rounded-full" style="background:${COMPARE_COLORS[i]}"></span><b class="text-[9px] truncate">${i+1}. ${s.title}</b></div><div class="text-[8px] sub mb-1">${s.subtitle}</div><div class="grid grid-cols-3 gap-1 text-[8px] sub"><span>1Y <b class="num" style="color:var(--txt)">${s.perf>0?'+':''}${s.perf}%</b></span><span>vs ${bench.short} <b class="num" style="color:var(--txt)">${gap>0?'+':''}${gap}%</b></span><span>น้ำหนัก <b class="num" style="color:var(--txt)">${s.exposure}%</b></span></div></div>`;}).join('')}</div><div class="text-[8px] sub mt-2 pt-2 brdt">ใช้ค้นหากลุ่มที่สนใจก่อนเจาะดูหุ้นและกองทุน ไม่ใช่สัญญาณซื้อขาย</div></aside></div></div>`:`<div class="mt-3 rounded-lg surf2 brd px-3 py-2 text-[9px] sub">เลือกได้หลายกลุ่มจากการ์ดด้านบน แล้วระบบจะแสดงทุกเส้นบนกราฟเดียวกันและกรอง Ranking หุ้นด้านล่างให้ตรงกับสิ่งที่เลือก</div>`;
+  const waiting=unavailable.length?`<details class="mt-3 surf2 brd rounded-lg px-3 py-2"><summary class="text-[9px] font-bold cursor-pointer">หมวดใน taxonomy ที่ยังไม่มีข้อมูลตัวอย่าง ${unavailable.length} หมวด</summary><div class="text-[9px] sub mt-2">${unavailable.map(s=>`${s.title} (${s.subtitle})`).join(' · ')}</div></details>`:'';
+  const method=foreign&&state.scopeMode==='region'?'จัดกลุ่มกองทุนตามนโยบายภูมิภาค/ประเทศ แล้วคำนวณจากหุ้นหลักของกองทุนในหมวดนั้น':'จัดหุ้นใน Top Holdings เข้าหมวดตาม taxonomy ที่เลือก แล้วคำนวณผลตอบแทนถ่วงน้ำหนัก';
+  wrap.innerHTML=`<div class="text-[11px] font-bold sub uppercase tracking-wide mb-1.5">① วิเคราะห์กลุ่มจาก Performance และการถือหุ้น · ${label}</div><div class="surf brd rounded-xl cs p-4"><div class="flex items-start justify-between gap-3 flex-wrap mb-3"><div><h2 class="text-[16px] font-extrabold">เปรียบเทียบ ${label} ก่อนเจาะดูหุ้นที่กองทุนถือ</h2><p class="text-[10px] sub mt-0.5">เลือกได้สูงสุด 5 กลุ่มเพื่อเปรียบเทียบผลตอบแทนบนกราฟเดียวกัน จากนั้น Ranking หุ้นและรายชื่อกองทุนด้านล่างจะปรับตาม</p></div>${mode}</div><div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3">${signalCard('ผลตอบแทนสูงสุด 1 ปี',leader?leader.title:'—',leader?`${leader.perf>0?'+':''}${leader.perf}% · คลิกเพิ่มลงกราฟ`:'ไม่มีข้อมูล',leader,TYPES[state.tab].acc)}${signalCard(`สูงกว่า ${bench.short}`,`${outperform}/${scopes.length} กลุ่ม`,`ผลตอบแทน 1 ปีมากกว่า ${bench.name}`,null,'#0e9f6e')}${signalCard('กลุ่มที่ให้น้ำหนักมากสุด',top?top.title:'—',top?`${top.exposure}% จากหุ้นหลักของกองทุน`: 'ไม่มีข้อมูล',top,'#7a5af5')}${signalCard('หุ้นที่หลายกองถือร่วมกัน',mostHeld?mostHeld.ticker:'—',mostHeld?`พบใน ${mostHeld.fundCount} กอง · น้ำหนักรวม ${mostHeld.totalWeight}%`:'ไม่มีข้อมูล',null,'#e0a411')}</div><div class="rounded-xl px-3 py-2.5 mb-3" style="background:${TYPES[state.tab].acc}0d;border:1px solid ${TYPES[state.tab].acc}30"><div class="text-[9px] font-bold" style="color:${TYPES[state.tab].acc}">วิธีอ่านข้อมูล</div><div class="text-[9px] sub mt-0.5"><b>Performance</b>: ${method} ไม่ใช่ดัชนีหมวดอย่างเป็นทางการ · <b>น้ำหนักหุ้นรวม</b> คือผลรวมเปอร์เซ็นต์หุ้นในแต่ละกอง · ${example}</div></div><div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5">${cards}</div>${waiting}${chosen}${detail}</div>`;
+  if(selected.length)buildStockScopeChart(selected);else destroyChart('scope-trend-chart');
+}
+function trendSeries(s){const seed=[...sid(s.id)].reduce((a,c)=>a+c.charCodeAt(0),71);return performanceSeries(seed,s.perf,CMP_LABELS.length);}
+function trendStats(s){const data=trendSeries(s),moves=data.slice(1).map((v,i)=>v-data[i]),mean=moves.reduce((a,b)=>a+b,0)/Math.max(1,moves.length);return{scope:s,data,momentum:+(data.at(-1)-data.at(-4)).toFixed(1),vol:+Math.sqrt(moves.reduce((n,v)=>n+(v-mean)**2,0)/Math.max(1,moves.length)).toFixed(1)};}
+function trendBenchmark(){return state.tab==='thai'?{name:'SET TRI',ret:3.2}:state.tab==='mixed'?{name:'พอร์ตผสม 60/40',ret:5.4}:{name:'MSCI ACWI',ret:GLOBAL_RETURN};}
+function trendLeaders(){const ranked=[...SCOPES].sort((a,b)=>b.perf-a.perf);if(state.scope){const chosen=SCOPES.find(s=>s.id===state.scope);return chosen?[chosen]:ranked.slice(0,5);}return[...ranked.slice(0,3),...ranked.slice(-2)].filter((s,i,a)=>a.findIndex(x=>x.id===s.id)===i).slice(0,5);}
+function signalCard(label,value,help,scope,color){return `<button ${scope?`data-scope="${scope.id}" onclick="setScope('${scope.id.replace(/'/g,"\\'")}')"`:''} class="signal-card"><div class="text-[9px] sub font-bold">${label}</div><div class="text-[12px] font-extrabold truncate mt-0.5" style="${color?`color:${color}`:''}" title="${value}">${value}</div><div class="text-[8px] sub mt-0.5 truncate" title="${help}">${help}</div></button>`;}
+function renderTrend(){const wrap=document.getElementById('trendWrap');if(state.tab==='feeder'){renderThemePulse(wrap);return;}if(isStockTab()){renderStockExposure(wrap);return;}const kind=state.tab==='mixed'?'สินทรัพย์':'กลุ่มอุตสาหกรรม',stats=SCOPES.map(trendStats),leader=[...stats].sort((a,b)=>b.scope.perf-a.scope.perf)[0],laggard=[...stats].sort((a,b)=>a.scope.perf-b.scope.perf)[0],momentum=[...stats].sort((a,b)=>b.momentum-a.momentum)[0],positive=SCOPES.filter(s=>s.perf>0).length,bench=trendBenchmark();
+  const chips=`<button onclick="setScope(null)" class="scope-chip ${!state.scope?'on':''}">ภาพรวม</button>`+SCOPES.map(s=>`<button onclick="setScope('${s.id.replace(/'/g,"\\'")}')" class="scope-chip ${state.scope===s.id?'on':''}">${s.title}</button>`).join('');
+  const signals=[signalCard('ผลตอบแทนสูงสุด 12 เดือน',leader?leader.scope.title:'—',leader?`${leader.scope.perf>0?'+':''}${leader.scope.perf}% · คลิกเพื่อเจาะดู`:'ไม่มีข้อมูล',leader&&leader.scope,TYPES[state.tab].acc),signalCard('ผลตอบแทนต่ำสุด 12 เดือน',laggard?laggard.scope.title:'—',laggard?`${laggard.scope.perf>0?'+':''}${laggard.scope.perf}% · ใช้เห็นอีกด้านของตลาด`:'ไม่มีข้อมูล',laggard&&laggard.scope,'#dc2626'),signalCard('โมเมนตัม 3 เดือน',momentum?momentum.scope.title:'—',momentum?`${momentum.momentum>0?'+':''}${momentum.momentum}% ใน 3 เดือนล่าสุด`:'ไม่มีข้อมูล',momentum&&momentum.scope,'#7a5af5'),signalCard('กลุ่มที่เป็นบวก',`${positive}/${SCOPES.length} กลุ่ม`,`ผลตอบแทน 12 เดือนมากกว่า 0%`,null,'#0e9f6e')].join('');
+  const chartTitle=state.scope?`แนวโน้ม ${state.scope}`:`ภาพตลาด: 3 กลุ่มนำและ 2 กลุ่มตาม`;
+  wrap.innerHTML=`<div class="text-[11px] font-bold sub uppercase tracking-wide mb-1.5">① Market Lens · แนวโน้ม${kind}</div><div class="surf brd rounded-xl cs p-4"><div class="flex items-start justify-between gap-3 flex-wrap mb-3"><div><h2 class="text-[16px] font-extrabold">${chartTitle}</h2><p class="text-[10px] sub mt-0.5">แสดงทั้งด้านบวกและด้านลบของตลาดโดยจำกัดไม่เกิน 5 เส้น · คลิกสัญญาณ เส้น หรือปุ่ม เพื่อกรองข้อมูลส่วนถัดลงมา</p></div><span class="text-[10px] font-bold px-2.5 py-1 rounded-full surf2 brd">ขอบเขต: ${state.scope||'ภาพรวมตลาด'}</span></div><div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3">${signals}</div><div class="chart-note rounded-lg px-3 py-2 mb-2 flex items-center gap-2 flex-wrap"><span class="w-6 border-t-2 border-dashed" style="border-color:#7b879d"></span><b class="text-[10px]">จุดอ้างอิง: ${bench.name}</b><span class="text-[9px] sub">ใช้ดูทิศทางโดยรวม ไม่ใช่ benchmark ทางการของทุกกองทุน</span></div><div class="h-64 surf2 brd rounded-xl p-2 mb-2"><canvas id="scope-trend-chart" aria-label="กราฟ${chartTitle}เทียบ${bench.name}"></canvas></div><div class="flex items-center justify-between gap-2 mb-1"><span class="text-[9px] sub">เลือก${kind}อื่นเพื่อเจาะดูทีละกลุ่ม</span>${state.scope?`<button onclick="setScope(null)" class="text-[9px] font-bold" style="color:${TYPES[state.tab].acc}">กลับสู่ภาพรวมตลาด</button>`:''}</div><div class="flex gap-1.5 overflow-x-auto pb-1">${chips}</div></div>`;
+  buildTrendChart();
+}
+function buildTrendChart(){const id='scope-trend-chart',el=document.getElementById(id);if(!el)return;destroyChart(id);const visible=trendLeaders(),bench=trendBenchmark();
+  const sets=visible.map((s,i)=>{const color=COMPARE_COLORS[i%COMPARE_COLORS.length];return{label:s.title,scopeId:s.id,data:trendSeries(s),borderColor:color,backgroundColor:color,borderWidth:state.scope?3:2.3,pointRadius:0,pointHoverRadius:4,tension:.28,fill:false};});
+  sets.push({label:`${bench.name} · จุดอ้างอิง`,scopeId:null,data:performanceSeries(731,bench.ret,CMP_LABELS.length),borderColor:'#7b879d',backgroundColor:'#7b879d',borderWidth:2,borderDash:[6,4],pointRadius:0,pointHoverRadius:4,tension:.28,fill:false});
+  charts[id]=new Chart(el,{type:'line',data:{labels:CMP_LABELS,datasets:sets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},onClick:(ev)=>{const pts=charts[id].getElementsAtEventForMode(ev,'nearest',{intersect:false},true),ds=pts.length&&sets[pts[0].datasetIndex];if(ds&&ds.scopeId)setScope(ds.scopeId);},plugins:{legend:{position:'bottom',onClick:(ev,item)=>{const ds=sets[item.datasetIndex];if(ds&&ds.scopeId)setScope(ds.scopeId);},labels:{usePointStyle:true,pointStyle:'line',boxWidth:20,font:{size:9},padding:10}},tooltip:{callbacks:{title:c=>c[0]?.label||'',label:c=>` ${c.dataset.label}: ${(c.parsed.y-100).toFixed(1)}%`,afterBody:c=>c[0]?.dataset.scopeId?'คลิกกราฟเพื่อกรองข้อมูลด้านล่าง':''}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:0,maxTicksLimit:7}},y:{ticks:{font:{size:9},callback:v=>(v-100)+'%'},grid:{color:'rgba(148,163,184,.15)'}}}}});}
+
+/* ================= SECTION 2: RANKING CARDS ================= */
+function rankCard(title,emoji,rows,pills,desc){return `<div class="surf brd rounded-xl cs overflow-hidden">
+  <div class="px-3 pt-2.5 pb-2 brdb"><div class="text-[12px] font-bold flex items-center gap-1.5"><span class="w-5 h-5 rounded flex items-center justify-center text-white text-[11px]" style="background:${TYPES[state.tab].acc}">${emoji}</span>${title}</div>${desc?`<div class="text-[9px] sub mt-1">${desc}</div>`:''}${pills?`<div class="flex gap-1 mt-1.5 flex-wrap">${pills}</div>`:''}</div>
+  <div class="py-1">${rows}</div></div>`;}
+function rankRows(list,valFn){return list.slice(0,5).map((e,i)=>{const order=state.groups.indexOf(e.id);return `<div class="rkrow flex items-center gap-2 px-3 py-1.5 ${order>-1?'sel':''}" onclick="selectGroup(${e.idx})" title="${order>-1?'คลิกเพื่อนำออกจากกราฟ':'คลิกเพื่อเพิ่มลงกราฟเปรียบเทียบ'}">
+  <span class="num w-4 text-center text-[11px] font-extrabold sub">${['🥇','🥈','🥉'][i]||(i+1)}</span>
+  <span class="flex-1 min-w-0 text-[12px] font-semibold truncate">${e.title}</span>
+  <span class="text-[12px]">${valFn(e)}</span>${order>-1?`<span class="select-order" aria-label="ลำดับที่เลือก ${order+1}">${order+1}</span>`:'<span class="num w-5 h-5 rounded-md brd sub text-[13px] flex items-center justify-center">+</span>'}</div>`;}).join('');}
+function pillSet(kind,opts){return opts.map(([k,l])=>`<button onclick="event.stopPropagation();state.rk['${kind}']='${k}';renderCards()" class="num px-2 py-0.5 rounded-full text-[10px] font-bold ${state.rk[kind]===k?'text-white':'surf2 sub'}" style="${state.rk[kind]===k?`background:${TYPES[state.tab].acc}`:''}">${l}</button>`).join('');}
+function renderCards(){const es=ENTS,pf=state.rk.flow,pr=state.rk.ret;
+  const heading=document.getElementById('rankingHeading');
+  if(isStockTab()){const selectedScopes=state.stockScopeSelections.map(id=>SCOPES.find(s=>s.id===id)).filter(Boolean),scopeText=selectedScopes.length===1?selectedScopes[0].title:selectedScopes.length?`${selectedScopes.length} กลุ่มที่เลือก`:'ขอบเขตทั้งหมด';heading.textContent=`② หุ้น${state.tab==='offshore'?'ต่างประเทศ':'ไทย'}ใน ${scopeText}`;document.getElementById('cards').innerHTML=[
+    rankCard('ถือโดยกองทุนมากที่สุด','🏦',rankRows([...es].sort((a,b)=>b.fundCount-a.fundCount||b.totalWeight-a.totalWeight),e=>`<b class="num">${e.fundCount} กอง</b>`),`<span class="text-[10px] sub">นับจำนวนกองทุนที่พบหุ้นใน Top Holdings</span>`,'ช่วยดูว่าหุ้นใดปรากฏในหลายกองทุน ไม่ใช่คำแนะนำซื้อ'),
+    rankCard('น้ำหนักรวมสูงสุด','⚖️',rankRows([...es].sort((a,b)=>b.totalWeight-a.totalWeight),e=>`<b class="num" style="color:${TYPES[state.tab].acc}">${e.totalWeight.toFixed(1)}%</b>`),`<span class="text-[10px] sub">ผลรวมน้ำหนักจากกองทุนตัวอย่าง</span>`,'ช่วยเห็นหุ้นที่กองทุนไทยให้น้ำหนักรวมสูง'),
+    rankCard('เงินปันผลหุ้นสูงสุด','💸',rankRows([...es].sort((a,b)=>b.div-a.div),e=>`<b class="num text-pos-600 text-[12px]">${e.div.toFixed(1)}%</b>`),`<span class="text-[10px] sub">อัตราผลตอบแทนเงินปันผล %</span>`,'เทียบอัตราปันผลของหุ้นรายตัว ไม่ใช่ของกองทุน')
+  ].join('');return;}
+  heading.textContent=state.tab==='feeder'?(state.themeSelections.length?`② Master Fund ใน ${state.themeSelections.length} ธีมที่เลือก`:'② อันดับ Master Fund จากทุกธีม'):'② อันดับภายในขอบเขตที่เลือก';
+  document.getElementById('cards').innerHTML=[
+    rankCard('เงินไหลเข้าสูงสุด','💰',rankRows([...es].sort((a,b)=>b.flowP[pf]-a.flowP[pf]),e=>flowH(e.flowP[pf])),pillSet('flow',[['w1','1W'],['m1','1M'],['y1','1Y']]),'ดูว่าช่วงนี้เงินลงทุนกำลังไหลไปที่ไหน'),
+    rankCard('ผลตอบแทนสูงสุด','📈',rankRows([...es].sort((a,b)=>b.retP[pr]-a.retP[pr]),e=>pct(e.retP[pr])),pillSet('ret',[['m1','1M'],['q1','3M'],['y1','1Y'],['y3','3Y'],['y5','5Y']]),'ดูรายการที่สร้างผลตอบแทนสูงในช่วงเวลาที่เลือก'),
+    rankCard('จ่ายปันผลสูงสุด','🌿',rankRows([...es].sort((a,b)=>b.div-a.div),e=>`<b class="num text-pos-600 text-[12px]">${e.div.toFixed(1)}%</b>`),`<span class="text-[10px] sub">ย้อนหลัง 12 เดือน</span>`,'ดูรายการที่สร้างกระแสเงินสดจากเงินปันผลสูง')
+  ].join('');}
+function selectGroup(idx){const e=ENTS[idx];if(!e)return;const at=state.groups.indexOf(e.id);
+  if(at>-1)state.groups.splice(at,1);else if(state.groups.length<7)state.groups.push(e.id);else{alert('เลือกเปรียบเทียบได้สูงสุด 7 รายการ');return;}
+  render();}
+function clearGroupSelection(){state.groups=[];render();}
+function scrollInsights(){document.getElementById('insightWrap').scrollIntoView({behavior:'smooth',block:'start'});}
+function renderSelectionBar(){const bar=document.getElementById('selectionBar');
+  if(state.tab==='mixed'){bar.classList.add('hidden');bar.innerHTML='';return;}
+  const selected=state.groups.map(id=>ENTS.find(e=>e.id===id)).filter(Boolean);
+  bar.classList.remove('hidden');
+  bar.innerHTML=`<div class="surf brd rounded-xl px-3 py-2 flex items-center gap-2 flex-wrap text-[11px]">
+    <span class="font-bold">เลือกเพื่อเปรียบเทียบ <b class="num" style="color:${TYPES[state.tab].acc}">${selected.length}/7</b></span>
+    <span class="sub">คลิกได้หลาย${isStockTab()?'หุ้น':'รายการ'}จาก Ranking Card และลำดับจะเรียงตามที่กด</span>
+    ${selected.length?`<button onclick="clearGroupSelection()" class="font-semibold px-2 py-1 rounded-lg surf2 brd">ล้างทั้งหมด</button>`:''}
+    <button onclick="scrollInsights()" class="ml-auto px-3 py-1.5 rounded-lg text-white font-bold" style="background:${TYPES[state.tab].acc}">ดูกราฟเปรียบเทียบ ↓</button>
+  </div>`;}
+
+/* ================= SECTION 2: ADVANCED FILTER ================= */
+function hasSec(f,kw){return (f.sectors||[]).some(s=>s[0].includes(kw));}
+const F_OFF=[
+ {id:'fx',label:'FX Hedging (นโยบายป้องกันค่าเงิน)',opts:[{v:'h100',l:'Fully Hedged (100%)',m:f=>f.st.fxhedge===100},{v:'hpart',l:'ตามดุลยพินิจ (บางส่วน)',m:f=>f.st.fxhedge!=null&&f.st.fxhedge>0&&f.st.fxhedge<100},{v:'hnone',l:'Unhedged (ไม่ป้องกัน)',m:f=>f.st.fxhedge===0}]},
+ {id:'geo',label:'Geography (ภูมิภาค/ประเทศ)',opts:[{v:'global',l:'Global Equity',m:f=>/ทั่วโลก|โลก/.test(f.country+f.themes.join())},{v:'us',l:'US Equity',m:f=>/สหรัฐ/.test(f.country+f.themes.join())},{v:'china',l:'China Equity',m:f=>/จีน/.test(f.country+f.themes.join())},{v:'europe',l:'Europe',m:f=>/ยุโรป/.test(f.country+f.themes.join())},{v:'asia',l:'Asia ex-Japan',m:f=>/เอเชีย|เกาหลี/.test(f.country+f.themes.join())},{v:'em',l:'Emerging Markets',m:f=>/ตลาดเกิดใหม่|จีน|เกาหลี/.test(f.country+f.themes.join())}]},
+ {id:'mega',label:'Megatrends / Thematic',opts:[{v:'tech',l:'Technology',m:f=>/เทคโนโลยี/.test(f.themes.join())},{v:'ai',l:'AI & Robotics',m:f=>/AI|หุ่นยนต์/.test(f.themes.join())},{v:'semi',l:'Semiconductor',m:f=>/เซมิ/.test(f.themes.join())},{v:'health',l:'Healthcare',m:f=>/สุขภาพ/.test(f.themes.join())},{v:'esg',l:'ESG / ยั่งยืน',m:f=>/ESG|ยั่งยืน/.test(f.themes.join())},{v:'gold',l:'Gold / Commodities',m:f=>/ทองคำ|ปลอดภัย/.test(f.themes.join())}]},
+ {id:'style',label:'Fund Style',opts:[{v:'passive',l:'Passive (ดัชนี)',m:f=>/ดัชนี|Index/.test(f.themes.join())},{v:'active',l:'Active (เชิงรุก)',m:f=>/เชิงรุก|Active/.test(f.themes.join())},{v:'div',l:'Dividend (ปันผล)',m:f=>f.div>0}]}
+];
+const F_THAI=[
+ {id:'invstyle',label:'Investment Style',opts:[{v:'index',l:'Index / Passive (SET50/100)',m:f=>/ดัชนี|Index/.test(f.themes.join())||f.active<10},{v:'active',l:'Active (เชิงรุก)',m:f=>/เชิงรุก|Active/.test(f.themes.join())||f.active>40},{v:'hidiv',l:'High Dividend (SETHD)',m:f=>f.div>=3},{v:'esg',l:'ESG / Thai ESG',m:f=>/ESG|ยั่งยืน/.test(f.themes.join())}]},
+ {id:'size',label:'Size & Characteristic',opts:[{v:'large',l:'Large-Cap (ใหญ่)',m:f=>/ดัชนี|SET50/.test(f.themes.join())||f.active<20},{v:'mid',l:'Mid/Small-Cap (เล็ก-กลาง)',m:f=>/เล็ก|กลาง/.test(f.themes.join())},{v:'value',l:'Value / ปันผล',m:f=>f.div>=3}]}
+];
+function filterCfg(){return state.tab==='thai'?F_THAI:(state.tab==='feeder'||state.tab==='offshore')?F_OFF:null;}
+function matchFund(f){const q=state.quick,cfg=filterCfg();
+  if(q.wrapper&&f.wrapper!==q.wrapper)return false;if(q.amc&&f.amc!==q.amc)return false;if(q.dividend==='yes'&&f.div<=0)return false;if(q.dividend==='no'&&f.div>0)return false;if(q.minInvest&&f.minInvest>+q.minInvest)return false;
+  if(state.metric.retMin!==undefined&&state.metric.retMin!==''&&f.perf<+state.metric.retMin)return false;if(state.metric.sdMax!==undefined&&state.metric.sdMax!==''&&f.st.sd>+state.metric.sdMax)return false;if(state.metric.sharpeMin!==undefined&&state.metric.sharpeMin!==''&&f.st.sharpe<+state.metric.sharpeMin)return false;if(state.metric.ddMin!==undefined&&state.metric.ddMin!==''&&f.st.maxdd<+state.metric.ddMin)return false;
+  if(!cfg)return true;return cfg.every(g=>{const s=state.filt[g.id];if(!s||!s.size)return true;return g.opts.some(o=>s.has(o.v)&&o.m(f));});}
+function setQuick(k,v){state.quick[k]=v;state.open=new Set();render();}
+function setMetric(k,v){state.metric[k]=v;state.open=new Set();render();}
+function toggleMetricFilter(k){state.metricOpen.has(k)?state.metricOpen.delete(k):state.metricOpen.add(k);renderQuickFilters();}
+function resetFundFilters(){state.quick={wrapper:'',amc:'',dividend:'',minInvest:''};state.metric={};state.metricOpen=new Set();state.filt={};state.open=new Set();render();}
+function renderQuickFilters(){const el=document.getElementById('quickFilters'),amcs=[...new Set(baseFunds().map(f=>f.amc))].sort();
+  const opt=(v,l,sel)=>`<option value="${v}" ${sel===v?'selected':''}>${l}</option>`;
+  const metric=(k,label,field,options)=>`<div class="flex items-center gap-1.5"><button onclick="toggleMetricFilter('${k}')" class="fpill ${state.metricOpen.has(k)||state.metric[field]!==undefined?'on':''}" style="${state.metricOpen.has(k)||state.metric[field]!==undefined?`background:${TYPES[state.tab].acc}`:''}">＋ ${label}</button>${state.metricOpen.has(k)?`<select onchange="setMetric('${field}',this.value)" class="filter-select w-auto">${options.map(o=>opt(o[0],o[1],String(state.metric[field]??''))).join('')}</select>`:''}</div>`;
+  const taxOpts=WRAPPER_TYPES.map(v=>opt(v,v==='ทั่วไป'?'กองทั่วไป (ไม่ใช้สิทธิลดหย่อน)':v==='LTF'?'LTF (กองเดิม)':v,state.quick.wrapper)).join('');
+  const context=isStockTab()?`กรองเฉพาะกองทุนไทยที่ถือหุ้น${state.groups.length?'ที่เลือก':'ในขอบเขตด้านบน'} — ตัวเลขผลตอบแทนส่วนนี้เป็นของกองทุน`:'โครงสร้าง Feeder Fund แสดงอยู่ในแท็บแล้ว ตัวกรองนี้ใช้แยกสิทธิภาษีและเงื่อนไขการลงทุน';
+  el.innerHTML=`<div class="surf brd rounded-xl cs p-3"><div class="mb-2"><b class="text-[11px]">คัดกรองกองทุนที่ซื้อได้</b><span class="text-[9px] sub ml-2">${context}</span></div><div class="grid sm:grid-cols-2 lg:grid-cols-[1.15fr_1.4fr_1fr_1fr_auto] gap-2 items-end"><label class="text-[10px] font-bold sub">สิทธิประโยชน์ภาษี<select onchange="setQuick('wrapper',this.value)" class="filter-select mt-1">${opt('','ทั้งหมด',state.quick.wrapper)}${taxOpts}</select></label><label class="text-[10px] font-bold sub">บริษัทจัดการ (บลจ.)<select onchange="setQuick('amc',this.value)" class="filter-select mt-1">${opt('','บลจ. ทั้งหมด',state.quick.amc)}${amcs.map(v=>opt(v,v,state.quick.amc)).join('')}</select></label><label class="text-[10px] font-bold sub">นโยบายปันผล<select onchange="setQuick('dividend',this.value)" class="filter-select mt-1">${opt('','ทั้งหมด',state.quick.dividend)}${opt('yes','จ่ายปันผล',state.quick.dividend)}${opt('no','ไม่จ่ายปันผล',state.quick.dividend)}</select></label><label class="text-[10px] font-bold sub">เงินลงทุนขั้นต่ำ<select onchange="setQuick('minInvest',this.value)" class="filter-select mt-1">${opt('','ไม่จำกัด',state.quick.minInvest)}${opt('500','ไม่เกิน 500 บาท',state.quick.minInvest)}${opt('1000','ไม่เกิน 1,000 บาท',state.quick.minInvest)}${opt('5000','ไม่เกิน 5,000 บาท',state.quick.minInvest)}</select></label><button onclick="resetFundFilters()" class="px-3 py-2 rounded-lg surf2 brd text-[11px] font-bold">รีเซ็ต</button></div><div class="flex items-center gap-2 flex-wrap mt-3 pt-3 brdt"><span class="text-[10px] font-bold sub">เพิ่มตัวกรองเมื่อจำเป็น:</span>${metric('ret','ผลตอบแทนกองทุน','retMin',[['','ทั้งหมด'],['0','อย่างน้อย 0%'],['5','อย่างน้อย 5%'],['10','อย่างน้อย 10%'],['20','อย่างน้อย 20%']])}${metric('sd','SD','sdMax',[['','ทั้งหมด'],['10','ไม่เกิน 10%'],['15','ไม่เกิน 15%'],['20','ไม่เกิน 20%']])}${metric('sharpe','Sharpe Ratio','sharpeMin',[['','ทั้งหมด'],['0.5','อย่างน้อย 0.5'],['1','อย่างน้อย 1.0']])}${metric('dd','Max Drawdown','ddMin',[['','ทั้งหมด'],['-10','ไม่ต่ำกว่า -10%'],['-20','ไม่ต่ำกว่า -20%'],['-30','ไม่ต่ำกว่า -30%']])}</div></div>`;
+}
+function updateAdvBtn(){const acc=TYPES[state.tab].acc,cfg=filterCfg();const nSel=cfg?cfg.reduce((n,g)=>n+((state.filt[g.id]&&state.filt[g.id].size)||0),0):0;
+  const btn=document.getElementById('advBtn'),bN=document.getElementById('advN');
+  if(btn){btn.style.background=state.advOpen?acc:'';btn.style.color=state.advOpen?'#fff':'';btn.style.borderColor=state.advOpen?acc:'';}
+  if(bN){if(nSel){bN.classList.remove('hidden');bN.textContent=nSel;bN.style.background=state.advOpen?'rgba(255,255,255,.3)':acc;}else bN.classList.add('hidden');}return nSel;}
+function renderFilters(){const el=document.getElementById('advFilter');const acc=TYPES[state.tab].acc;const nSel=updateAdvBtn();
+  if(!state.advOpen){el.innerHTML='';return;}
+  const cfg=filterCfg();if(!cfg){el.innerHTML=`<div class="surf rounded-xl cs p-3.5 text-[12px] sub" style="border:1px solid ${acc}66">กองทุนผสมไม่มีตัวกรองขั้นสูงเพิ่มเติม — ใช้การ์ดอันดับด้านบนหรือช่องค้นหาได้เลย</div>`;return;}
+  const grp=g=>`<div class="mb-3"><div class="text-[11px] font-bold sub mb-1.5">${g.label}</div><div class="frow">${g.opts.map(o=>{const on=state.filt[g.id]&&state.filt[g.id].has(o.v);return `<button onclick="toggleFilt('${g.id}','${o.v}')" class="fpill ${on?'on':''}" style="${on?`background:${acc}`:''}">${o.l}</button>`;}).join('')}</div></div>`;
+  el.innerHTML=`<div class="surf rounded-xl cs p-3.5 slide" style="border:1px solid ${acc}66">
+    <div class="flex items-center gap-2 mb-3 flex-wrap"><span class="text-[13px] font-extrabold" style="color:${acc}">⚙️ ตัวกรองเพิ่มเติม</span>
+      ${nSel?`<span class="num text-[11px] px-2 py-0.5 rounded-full text-white font-bold" style="background:${acc}">${nSel} เงื่อนไข</span><button onclick="clearFilters()" class="text-[11px] font-semibold" style="color:${acc}">ล้างทั้งหมด ✕</button>`:'<span class="text-[11px] sub">เลือกเงื่อนไขเพื่อคัดเฉพาะกองที่ตรงกับการค้นหา (เลือกได้หลายข้อ)</span>'}
+      <button onclick="toggleAdv()" class="ml-auto text-[11px] font-bold px-2.5 py-1 rounded-lg surf2 brd">ปิด ✕</button></div>
+    ${cfg.map(grp).join('')}</div>`;}
+function toggleAdv(){state.advOpen=!state.advOpen;renderFilters();}
+function toggleFilt(gid,v){const s=state.filt[gid]||(state.filt[gid]=new Set());s.has(v)?s.delete(v):s.add(v);render();}
+function clearFilters(){state.filt={};render();}
+
+/* ================= SECTION 3: THEME & MASTER INSIGHTS ================= */
+function insightFor(ent){
+  const cur=INSIGHT[ent.id];
+  if(cur)return cur;
+  // generic fallback from members
+  const ms=ent.members,agg={};ms.forEach(m=>m.top5.forEach(t=>agg[t[0]]=(agg[t[0]]||0)+t[1]));
+  const top=Object.entries(agg).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([n,w])=>[n,n.slice(0,4).toUpperCase(),+(w/ms.length).toFixed(1),+(ent.perf*0.7).toFixed(1)]);
+  return{theme:ent.title,narr:'ธีมการลงทุนที่รวมกองทุนซึ่งมีนโยบายและพอร์ตใกล้เคียงกัน ให้ภาพรวมทิศทางและหุ้น/สินทรัพย์ที่ถืออยู่',pe:null,pb:null,flow:ent.flowP.y1,bench:'Benchmark',
+    master:{name:ent.members[0].master||ent.title,amc:ent.members[0].amc,aum:'—',incep:'—',te:2.5,pm:'—'},top};
+}
+const COMPARE_COLORS=['#2456d8','#0e9f6e','#e0a411','#7a5af5','#e2557a','#0891b2','#f04438'];
+const COMPARE_DASH=[[],[8,3],[3,2],[10,3,2,3],[6,2],[2,2],[12,3]];
+const GLOBAL_RETURN=12.8;
+const CMP_LABELS=['ก.ค. 68','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.','ม.ค. 69','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค. 69'];
+function performanceSeries(seed,fin,n){n=n||13;let s=seed,noise=[0];for(let i=1;i<n;i++){s=(s*9301+49297)%233280;noise.push((s/233280-.5)*10+Math.sin(i*.9+seed%5)*2.8);}const end=noise[n-1];return noise.map((v,i)=>+(100+(fin*i/(n-1))+v-(end*i/(n-1))).toFixed(1));}
+function avgMaxDrawdown(ent){return +(ent.members.reduce((sum,f)=>sum+f.st.maxdd,0)/ent.members.length).toFixed(1);}
+function keyCharacteristics(I){const n=(I.theme+' '+I.master.name).toLowerCase();
+  if(I.pe!=null)return `<div class="surf2 rounded-lg px-2 py-1.5 mb-2"><div class="text-[8px] sub font-bold">VALUATION</div><div class="num text-[10px] font-bold">Forward P/E ${I.pe}x · P/B ${I.pb}x</div><div class="text-[8px] sub">ใช้เทียบกับดัชนีประจำกอง ไม่ใช่ใช้ตัดสินจากตัวเลขเดียว</div></div>`;
+  if(/gold|ทอง/.test(n))return `<div class="surf2 rounded-lg px-2 py-1.5 mb-2"><div class="text-[8px] sub font-bold">COST &amp; TRACKING</div><div class="num text-[10px] font-bold">Expense Ratio 0.40% · Tracking Difference -0.12%</div></div>`;
+  if(/bond|ตราสาร/.test(n))return `<div class="surf2 rounded-lg px-2 py-1.5 mb-2"><div class="text-[8px] sub font-bold">INCOME &amp; RATE RISK</div><div class="num text-[10px] font-bold">YTM 4.9% · Duration 6.2 ปี · Credit A+</div></div>`;
+  return '';
+}
+function compareBenchmark(){return state.tab==='thai'?{name:'SET TRI',ret:3.2,short:'SET'}:{name:'MSCI ACWI',ret:GLOBAL_RETURN,short:'Global'};}
+function renderStockInsight(wrap,selected){const foreign=state.tab==='offshore',bench=compareBenchmark(),itemLabel=foreign?'หุ้นต่างประเทศ':'หุ้นไทย';
+  const cards=selected.map((ent,i)=>{const gap=+(ent.perf-bench.ret).toFixed(1),m=ent.meta,color=COMPARE_COLORS[i];return `<div class="compare-card" style="border-left:4px solid ${color}"><div class="flex items-start gap-2 mb-2"><span class="select-order" style="background:${color}">${i+1}</span><div class="min-w-0 flex-1"><div class="text-[11px] font-extrabold truncate">${ent.ticker} · ${ent.name}</div><div class="text-[9px] sub truncate">${ent.sector} · ${ent.country}</div></div><button onclick="selectGroup(${ent.idx})" class="sub text-[13px] leading-none" aria-label="นำ ${ent.ticker} ออกจากการเปรียบเทียบ">✕</button></div><div class="grid grid-cols-3 gap-1.5 mb-2"><div class="metric-cell"><div class="text-[8px] sub">1Y Return</div><div class="text-[12px]">${pct(ent.perf)}</div><div class="metric-help">ผลตอบแทนหุ้นย้อนหลัง 1 ปี</div></div><div class="metric-cell"><div class="text-[8px] sub">Max Drawdown</div><div class="num text-[11px] font-bold text-neg-600">${m.dd}%</div><div class="metric-help">ลงหนักสุดจากจุดสูงสุด</div></div><div class="metric-cell"><div class="text-[8px] sub">vs ${bench.short}</div><div class="num text-[11px] font-bold ${gap>=0?'text-pos-600':'text-neg-600'}">${gap>0?'+':''}${gap}%</div><div class="metric-help">เทียบ ${bench.name}</div></div></div><div class="surf2 rounded-lg px-2 py-1.5 mb-2"><div class="text-[8px] sub font-bold">VALUATION</div><div class="num text-[10px] font-bold">P/E ${m.pe}x · P/B ${m.pb}x · Dividend ${m.div}%</div><div class="text-[8px] sub">ใช้เปรียบเทียบหุ้นใน Sector เดียวกัน ไม่ใช้ตัดสินจากตัวเลขเดียว</div></div><div class="text-[9px] sub flex gap-x-2 gap-y-0.5 flex-wrap"><span>Market Cap <b class="num" style="color:var(--txt)">${m.cap}</b></span><span>พบใน <b class="num" style="color:var(--txt)">${ent.fundCount}</b> กอง</span><span class="w-full">น้ำหนักรวมใน Top Holdings <b class="num" style="color:var(--txt)">${ent.totalWeight}%</b></span></div></div>`;}).join('');
+  wrap.innerHTML=`<div class="text-[11px] font-bold sub uppercase tracking-wide mb-1.5">③ Stock Comparison · เปรียบเทียบ${itemLabel}</div><div class="surf brd rounded-xl cs p-4"><div class="flex items-start justify-between gap-3 flex-wrap mb-3"><div><h2 class="text-[17px] font-extrabold">เปรียบเทียบผลตอบแทน${itemLabel}บนกราฟเดียวกัน</h2><p class="text-[10px] sub mt-0.5">ผลตอบแทนราคาแบบฐาน 100 · 12 เดือน · กองทุนที่ถือหุ้นเหล่านี้จะแสดงต่อในตารางด้านล่าง</p></div><span class="num text-[10px] font-bold px-2.5 py-1 rounded-full surf2 brd">เลือกแล้ว ${selected.length}/7</span></div><div class="grid lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,.85fr)] gap-4"><div class="min-w-0"><div class="chart-note rounded-lg px-3 py-2 mb-2 flex items-center gap-2 flex-wrap"><span class="w-6 border-t-2 border-dashed" style="border-color:#7b879d"></span><b class="text-[10px]">จุดอ้างอิง: ${bench.name}</b><span class="text-[9px] sub">ใช้เป็นเส้นกลางเพื่ออ่านทิศทาง ไม่ใช่ benchmark ทางการของหุ้นทุกตัว</span></div><div class="h-[360px] surf2 brd rounded-xl p-2"><canvas id="master-compare-chart" aria-label="กราฟเปรียบเทียบ${itemLabel}กับ ${bench.name}"></canvas></div>${selected.length===1?`<div class="text-[10px] sub mt-2 text-center">เลือกหุ้นเพิ่มจาก Ranking Card เพื่อเปรียบเทียบหลายตัว</div>`:''}</div><aside><div class="flex items-center justify-between mb-2"><b class="text-[12px]">หุ้นที่กำลังเปรียบเทียบ</b><span class="text-[9px] sub">เรียงตามลำดับที่กด</span></div><div class="max-h-[390px] overflow-y-auto pr-1 flex flex-col gap-2">${cards}</div></aside></div></div>`;
+  buildMasterCompareChart(selected);
+}
+function renderInsight(){const wrap=document.getElementById('insightWrap');
+  if(state.tab==='mixed'){wrap.innerHTML='';return;}
+  const selected=state.groups.map(id=>ENTS.find(e=>e.id===id)).filter(Boolean);
+  if(isStockTab()){if(!selected.length){wrap.innerHTML=`<div class="surf brd rounded-xl p-5 text-center text-[12px] sub"><b>③ ยังไม่ได้เลือกหุ้น${state.tab==='offshore'?'ต่างประเทศ':'ไทย'}</b><br>คลิก + จาก Ranking Card เพื่อสร้างกราฟเปรียบเทียบหุ้น และค้นหากองทุนที่ถือหุ้นนั้น</div>`;return;}renderStockInsight(wrap,selected);return;}
+  if(!selected.length){wrap.innerHTML=`<div class="surf brd rounded-xl p-5 text-center text-[12px] sub"><b>③ ยังไม่ได้เลือก ${state.tab==='feeder'?'Master Fund':'ธีม'}</b><br>คลิก + จาก Ranking Card ด้านบนเพื่อสร้างกราฟเปรียบเทียบ</div>`;return;}
+  const itemLabel=state.tab==='feeder'?'Master Fund':'ธีมลงทุน';
+  const cards=selected.map((ent,i)=>{const I=insightFor(ent),dd=avgMaxDrawdown(ent),gap=+(ent.perf-GLOBAL_RETURN).toFixed(1),color=COMPARE_COLORS[i],exposure=I.top.slice(0,3).map(h=>`${h[0]} ${h[2]}%`).join(' · ');return `<div class="compare-card" style="border-left:4px solid ${color}">
+    <div class="flex items-start gap-2 mb-2"><span class="select-order" style="background:${color}">${i+1}</span><div class="min-w-0 flex-1"><div class="text-[11px] font-extrabold truncate" title="${I.master.name}">${I.master.name}</div><div class="text-[9px] sub truncate" title="${I.theme}">${I.theme}</div></div><button onclick="selectGroup(${ent.idx})" class="sub text-[13px] leading-none" aria-label="นำ ${I.master.name} ออกจากการเปรียบเทียบ">✕</button></div>
+    <div class="grid grid-cols-3 gap-1.5 mb-2">
+      <div class="metric-cell"><div class="text-[8px] sub">1Y Return</div><div class="text-[12px]">${pct(ent.perf)}</div><div class="metric-help">ย้อนหลัง 1 ปี</div></div>
+      <div class="metric-cell"><div class="text-[8px] sub">Max Drawdown</div><div class="num text-[11px] font-bold text-neg-600">${dd}%</div><div class="metric-help">ลงหนักสุดจากจุดสูงสุด</div></div>
+      <div class="metric-cell"><div class="text-[8px] sub">vs Global</div><div class="num text-[11px] font-bold ${gap>=0?'text-pos-600':'text-neg-600'}">${gap>0?'+':''}${gap}%</div><div class="metric-help">เทียบตลาดหุ้นโลก</div></div>
+    </div>
+    ${keyCharacteristics(I)}
+    <div class="text-[8px] sub truncate mb-1.5" title="${exposure}">Top Exposure: ${exposure}</div>
+    <div class="text-[9px] sub flex gap-x-2 gap-y-0.5 flex-wrap"><span>AUM <b class="num" style="color:var(--txt)">${I.master.aum}</b></span><span>พบกองไทย <b class="num" style="color:var(--txt)">${ent.members.length}</b> กอง</span><span class="truncate w-full" title="${I.bench}">ดัชนีประจำกอง: ${I.bench}</span></div>
+  </div>`;}).join('');
+  wrap.innerHTML=`<div class="text-[11px] font-bold sub uppercase tracking-wide mb-1.5">③ เปรียบเทียบธีมและ ${TYPES[state.tab].rightTitle}</div>
+  <div class="surf brd rounded-xl cs p-4">
+    <div class="flex items-start justify-between gap-3 flex-wrap mb-3"><div><h2 class="text-[17px] font-extrabold">เปรียบเทียบผลตอบแทน ${itemLabel} บนกราฟเดียวกัน</h2><p class="text-[10px] sub mt-0.5">ผลตอบแทนสะสมแบบฐาน 100 · 12 เดือน · เรียงเส้นและการ์ดตามลำดับที่เลือก</p></div><span class="num text-[10px] font-bold px-2.5 py-1 rounded-full surf2 brd">เลือกแล้ว ${selected.length}/7</span></div>
+    <div class="grid lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,.85fr)] gap-4">
+      <div class="min-w-0">
+        <div class="chart-note rounded-lg px-3 py-2 mb-2 flex items-center gap-2 flex-wrap"><span class="w-6 border-t-2 border-dashed" style="border-color:#7b879d"></span><b class="text-[10px]">Global Benchmark: MSCI ACWI</b><span class="text-[9px] sub">ใช้เป็นจุดอ้างอิงเดียวกันเพื่อให้เห็นความต่างระหว่างธีม ไม่ใช่ดัชนีทางการของแต่ละกอง</span></div>
+        <div class="h-[360px] surf2 brd rounded-xl p-2"><canvas id="master-compare-chart" aria-label="กราฟเปรียบเทียบผลตอบแทนสะสมของรายการที่เลือกกับ MSCI ACWI"></canvas></div>
+        ${selected.length===1?`<div class="text-[10px] sub mt-2 text-center">เลือกเพิ่มอีกอย่างน้อย 1 รายการจาก Ranking Card เพื่อเห็นความต่างระหว่างธีม</div>`:''}
+      </div>
+      <aside><div class="flex items-center justify-between mb-2"><b class="text-[12px]">รายการที่กำลังเปรียบเทียบ</b><span class="text-[9px] sub">เรียงตามลำดับที่กด</span></div><div class="max-h-[390px] overflow-y-auto pr-1 flex flex-col gap-2">${cards}</div></aside>
+    </div>
+  </div>`;
+  buildMasterCompareChart(selected);
+}
+function buildMasterCompareChart(selected){const id='master-compare-chart',el=document.getElementById(id);if(!el)return;destroyChart(id);
+  const bench=isStockTab()?compareBenchmark():{name:'MSCI ACWI',ret:GLOBAL_RETURN},datasets=selected.map((ent,i)=>{const label=ent.kind==='stock'?`${ent.ticker} · ${ent.name}`:insightFor(ent).master.name,seed=[...sid(ent.id)].reduce((a,c)=>a+c.charCodeAt(0),31);return{label:`${i+1}. ${label}`,data:performanceSeries(seed,ent.perf,CMP_LABELS.length),borderColor:COMPARE_COLORS[i],backgroundColor:COMPARE_COLORS[i],borderWidth:2.4,borderDash:COMPARE_DASH[i],pointRadius:0,pointHoverRadius:4,tension:.32,fill:false};});
+  datasets.push({label:`${bench.name} · จุดอ้างอิง`,data:performanceSeries(731,bench.ret,CMP_LABELS.length),borderColor:'#7b879d',backgroundColor:'#7b879d',borderWidth:2,borderDash:[6,4],pointRadius:0,pointHoverRadius:4,tension:.3,fill:false});
+  charts[id]=new Chart(el,{type:'line',data:{labels:CMP_LABELS,datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,pointStyle:'line',boxWidth:24,font:{size:9},padding:10}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${(c.parsed.y-100).toFixed(1)}%`}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:0,autoSkip:true,maxTicksLimit:7}},y:{ticks:{font:{size:9},callback:v=>(v-100)+'%'},grid:{color:'rgba(148,163,184,.16)'}}}}});}
+
+/* ================= SECTION 4: FUND ACCORDION ================= */
+function currentFunds(){let fs;
+  if(state.groups.length){const seen=new Set();fs=state.groups.flatMap(id=>{const e=ENTS.find(x=>x.id===id);return e?e.members:[];}).filter(f=>{if(seen.has(f.id))return false;seen.add(f.id);return true;});}else fs=funds();
+  fs=fs.filter(matchFund);
+  const q=state.search.trim().toLowerCase();
+  if(q)fs=fs.filter(f=>[f.name,f.master||'',...(f.top5||[]).map(t=>t[0]),...(f.themes||[])].join(' ').toLowerCase().includes(q));
+  const value=(f,k)=>k==='return'?f.perf:k==='sd'?f.st.sd:k==='sharpe'?f.st.sharpe:k==='maxdd'?f.st.maxdd:k==='fee'?f.fee:k==='nav'?f.nav:k==='minInvest'?f.minInvest:k==='name'?f.name:f.risk;
+  return fs.sort((a,b)=>{const av=value(a,state.sort.key),bv=value(b,state.sort.key),d=typeof av==='string'?av.localeCompare(bv,'th'):av-bv;return state.sort.dir==='asc'?d:-d;});}
+function sortTable(key){if(state.sort.key===key)state.sort.dir=state.sort.dir==='asc'?'desc':'asc';else state.sort={key,dir:'asc'};render();}
+function sortMark(key){return state.sort.key===key?(state.sort.dir==='asc'?' ↑':' ↓'):'';}
+function relatedHoldings(f){const selected=new Set(state.groups),scopeSet=selectedScopeStocks(state.stockScopeSelections);return(f.top5||[]).filter(([name])=>{if(!STOCK_META[name])return false;if(selected.size)return selected.has(name);return scopeSet.size?scopeSet.has(name):true;});}
+function renderFundTable(list){const wrap=document.getElementById('tableWrap');
+  if(!list.length){wrap.innerHTML=`<div class="p-10 text-center sub text-[12px]">ไม่พบกองทุนที่ตรงกับขอบเขตและตัวกรองที่เลือก</div>`;return;}
+  const sortText=state.sort.key==='risk'?(state.sort.dir==='asc'?'ความเสี่ยงน้อย → มาก':'ความเสี่ยงมาก → น้อย'):'เรียงตามคอลัมน์ที่เลือก';
+  const stockHead=isStockTab()?'<th>หุ้นที่เชื่อมโยง</th><th>น้ำหนักรวม</th>':'';
+  wrap.innerHTML=`<div class="px-3 py-2.5 brdb flex items-center gap-2 flex-wrap"><div><b class="text-[11px]">กองทุนที่ตรงเงื่อนไข ${list.length} กอง</b><div class="text-[9px] sub">${isStockTab()?'แสดงเฉพาะกองทุนไทยที่ถือหุ้นจากขอบเขตหรือรายการที่เลือก · ':''}คลิกแถวเพื่อเปิดรายละเอียดได้หลายกองพร้อมกัน</div></div><span class="ml-auto text-[9px] font-bold px-2 py-1 rounded-full surf2 brd">${sortText}</span></div><table class="fund-table"><thead><tr><th onclick="sortTable('name')">กองทุน${sortMark('name')}</th>${stockHead}<th>บลจ.</th><th title="สิทธิประโยชน์ภาษี ไม่ใช่โครงสร้างกองทุน">สิทธิภาษี ⓘ</th><th onclick="sortTable('minInvest')">ขั้นต่ำ${sortMark('minInvest')}</th><th onclick="sortTable('nav')" title="NAV ต่อหน่วย ไม่ได้หมายถึงกองทุนถูกหรือแพง">NAV/หน่วย ⓘ${sortMark('nav')}</th><th onclick="sortTable('risk')">ความเสี่ยง${sortMark('risk')}</th><th onclick="sortTable('return')">ผลตอบแทนกองทุน 1 ปี${sortMark('return')}</th><th onclick="sortTable('sd')">SD${sortMark('sd')}</th><th onclick="sortTable('sharpe')">Sharpe${sortMark('sharpe')}</th><th onclick="sortTable('fee')">TER${sortMark('fee')}</th></tr></thead><tbody>${list.map(f=>{const rel=relatedHoldings(f),weight=rel.reduce((s,h)=>s+h[1],0);return`<tr class="${state.open.has(f.id)?'open':''}" onclick="toggleFund('${f.id}')"><td><div class="flex items-center gap-2">${avatar(f.amcCode,avColor(f.amc),28)}<div class="min-w-[180px]"><div class="font-bold">${f.name}</div><div class="text-[9px] sub">${f.id}${f.master?' · '+f.master:''}</div></div>${starEl(f.id)}</div></td>${isStockTab()?`<td><span class="block max-w-[180px] truncate" title="${rel.map(h=>h[0]).join(', ')}">${rel.map(h=>(STOCK_META[h[0]]||{}).ticker||h[0]).join(', ')||'—'}</span></td><td class="num font-bold" style="color:${TYPES[state.tab].acc}">${weight.toFixed(1)}%</td>`:''}<td><span class="block max-w-[150px] truncate" title="${f.amc}">${f.amc}</span></td><td>${f.wrapper==='ทั่วไป'?'ทั่วไป':f.wrapper}</td><td class="num">${f.minInvest.toLocaleString('th-TH')} บาท</td><td class="num font-bold">${f.nav.toFixed(4)}</td><td>${riskBadge(f.risk)}</td><td>${pct(f.perf)}</td><td class="num">${f.st.sd}%</td><td class="num font-bold">${f.st.sharpe}</td><td class="num">${f.fee.toFixed(2)}%</td></tr>`;}).join('')}</tbody></table>`;}
+function fxBadge(f){const v=f.st.fxhedge;let txt,cls;
+  if(v==null){txt='ไม่มี FX (กองในประเทศ)';cls='background:var(--surf2);color:var(--sub)';}
+  else if(v===100){txt='Fully Hedged · ป้องกัน 100%';cls='background:#ecfdf3;color:#047857';}
+  else if(v===0){txt='Unhedged · ไม่ป้องกัน';cls='background:#fef3f2;color:#dc2626';}
+  else{txt='ตามดุลยพินิจ · ปัจจุบัน '+v+'%';cls='background:#fef7e0;color:#b45309';}
+  return `<span class="num text-[11px] font-bold px-2.5 py-1 rounded-md" style="${cls}">FX: ${txt}</span>`;}
+function stat(l,v,cls){return `<div class="surf2 rounded-lg px-2 py-2 text-center"><div class="text-[9px] sub">${l}</div><div class="num text-[15px] font-extrabold ${cls||''}">${v}</div></div>`;}
+function fundRow(f){const S=sid(f.id),op=state.open.has(f.id),acc=TYPES[f.type].acc;
+  const head=`<div class="flex items-center gap-3 p-3 cursor-pointer" onclick="toggleFund('${f.id}')">
+      ${avatar(f.amcCode,avColor(f.amc),38)}
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2"><b class="text-[13px] truncate">${f.name}</b>${starEl(f.id)}</div>
+        <div class="text-[10px] sub truncate">${f.id} · ${f.amc}${f.master?' · Master: '+f.master:''}</div>
+      </div>
+      <div class="text-right hidden sm:block"><div class="text-[9px] sub">NAV</div><div class="num text-[13px] font-bold">${f.nav.toFixed(4)}</div></div>
+      <div class="text-right w-16"><div class="text-[9px] sub">1Y Return</div><div class="text-[13px]">${pct(f.perf)}</div></div>
+      <div class="hidden md:block">${riskBadge(f.risk)}</div>
+      <span class="chev ${op?'open':''} sub text-lg select-none">⌄</span></div>`;
+  const ring=op?`box-shadow:0 0 0 1.5px ${acc}55, 0 10px 30px -16px rgba(16,30,55,.3)`:'';
+  if(!op)return `<div class="surf brd rounded-xl cs overflow-hidden" style="${ring}">${head}</div>`;
+  const linked=isStockTab()?relatedHoldings(f):[];
+  const panel=`<div class="slide brdt p-3">${linked.length?`<div class="rounded-lg px-3 py-2 mb-3 text-[10px] font-bold" style="background:${acc}12;color:${acc};border:1px solid ${acc}35">หุ้นที่เชื่อมโยงกับการเลือก: ${linked.map(h=>`${(STOCK_META[h[0]]||{}).ticker||h[0]} ${h[1]}%`).join(' · ')}</div>`:''}
+    <div class="grid lg:grid-cols-3 gap-4">
+      <!-- ผลตอบแทน + ความเสี่ยง -->
+      <div>
+        <div class="text-[10px] font-bold sub mb-1">Calendar Year Returns (ผลตอบแทนรายปี)</div>
+        <div class="h-32 surf2 brd rounded-lg p-2 mb-2"><canvas id="${S}-cyr"></canvas></div>
+        <div class="grid grid-cols-3 gap-2">${stat('Sharpe',f.st.sharpe)}${stat('Max Drawdown',f.st.maxdd+'%','text-neg-600')}${stat('Recovery',f.st.recover+' ด.')}</div>
+      </div>
+      <!-- น้ำหนักพอร์ต + เซคเตอร์ -->
+      <div>
+        <div class="text-[10px] font-bold sub mb-1">น้ำหนักพอร์ต (Asset Allocation)</div>
+        <div class="h-28 surf2 brd rounded-lg p-2 mb-2"><canvas id="${S}-asset"></canvas></div>
+        <div class="text-[10px] font-bold sub mb-1">สัดส่วนกลุ่มอุตสาหกรรม (Sector)</div>
+        <div>${hbarsHTML(f.sectors,acc)}</div>
+      </div>
+      <!-- Top 5 + ต้นทุน + เอกสาร + ปุ่ม -->
+      <div>
+        <div class="text-[10px] font-bold sub mb-1">Top 5 Holdings (ทรัพย์สินที่ถือ)</div>
+        <div class="mb-2">${hbarsHTML(f.top5,acc)}</div>
+        <div class="flex items-center gap-2 mb-2 flex-wrap"><span class="num text-[11px] font-bold px-2.5 py-1 rounded-md surf2">TER: ${f.fee.toFixed(2)}%</span>${fxBadge(f)}</div>
+        <div class="flex items-center gap-4 mb-2.5 pb-2.5 brdb">${pdfLink('หนังสือชี้ชวน')}${pdfLink('Factsheet')}</div>
+        <div class="flex items-center gap-2">
+          <button data-cmp="${f.id}" onclick="togglePin('${f.id}')" class="flex-1 py-2 rounded-lg text-[13px] font-bold border ${isPin(f.id)?'bg-brand-600 text-white border-brand-600':'surf2 text-brand-700 border-brand-200'}">${isPin(f.id)?'✓ อยู่ในเปรียบเทียบ':'เปรียบเทียบ'}</button>
+          <button onclick="exploreFund('${f.id}')" class="flex-1 py-2 rounded-lg text-[13px] font-extrabold text-white" style="background:${acc}">ดูข้อมูลเพิ่มเติม</button>
+        </div>
+      </div>
+    </div></div>`;
+  return `<div class="surf brd rounded-xl cs overflow-hidden" style="${ring}">${head}${panel}</div>`;}
+function toggleFund(id){const opening=!state.open.has(id);opening?state.open.add(id):state.open.delete(id);render();if(opening)setTimeout(()=>{const card=document.getElementById('card-'+sid(id));if(card)card.scrollIntoView({behavior:'smooth',block:'nearest'});},60);}
+function closeAllFunds(){state.open.clear();render();}
+function buildAsset(f){const el=document.getElementById(sid(f.id)+'-asset');if(!el)return;const id=sid(f.id)+'-asset';destroyChart(id);
+  const arr=f.asset,cols=['#2456d8','#0e7ac0','#12b76a','#e0a411','#7a5af5','#64748b'];
+  charts[id]=new Chart(el,{type:'doughnut',data:{labels:arr.map(a=>a[0]),datasets:[{data:arr.map(a=>a[1]),backgroundColor:cols,borderColor:'rgba(255,255,255,.6)',borderWidth:1.5}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'right',labels:{boxWidth:8,font:{size:8},padding:3}},tooltip:{callbacks:{label:c=>` ${c.label}: ${c.parsed}%`}}}}});}
+function exploreFund(id){
+  window.open(`fund_detail.html?id=${id}`, '_blank');
+}
+function buildCyr(f){const el=document.getElementById(sid(f.id)+'-cyr');if(!el)return;const id=sid(f.id)+'-cyr';destroyChart(id);
+  charts[id]=new Chart(el,{type:'bar',data:{labels:f.cyr.map(c=>c[0]),datasets:[{data:f.cyr.map(c=>c[1]),backgroundColor:f.cyr.map(c=>c[1]<0?'#f04438':'#12b76a'),borderRadius:4,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y>0?'+':''}${c.parsed.y}%`}}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{ticks:{font:{size:9},callback:v=>v+'%'},grid:{color:'rgba(148,163,184,.14)'}}}}});}
+
+/* ================= PIN / COMPARE / WATCHLIST ================= */
+function togglePin(id){isPin(id)?pins=pins.filter(x=>x!==id):pins.push(id);savePins();
+  document.querySelectorAll('.star[data-pin="'+id+'"]').forEach(el=>{el.classList.toggle('on',isPin(id));el.textContent=isPin(id)?'★':'☆';});
+  renderCompare();updateCmpBtn();updateWatchCount();render();}
+function updateWatchCount(){const el=document.getElementById('wN');if(el)el.textContent=pins.length;}
+function toggleWatch(){const p=document.getElementById('watchPanel');p.classList.toggle('hidden');if(!p.classList.contains('hidden'))renderWatch();}
+function renderWatch(){const p=document.getElementById('watchPanel');const items=pins.map(id=>FUNDS.find(f=>f.id===id)).filter(Boolean);
+  p.innerHTML=`<div class="px-3 py-2 brdb text-[12px] font-bold">⭐ รายการติดตาม (${items.length})</div>`+
+   (items.length?`<div class="max-h-80 overflow-auto">`+items.map(f=>`<div class="flex items-center gap-2 px-3 py-2 brdb rkrow" onclick="gotoFund('${f.id}')">${avatar(f.amcCode,avColor(f.amc),28)}<div class="min-w-0 flex-1"><div class="text-[12px] font-semibold truncate">${f.name}</div><div class="text-[10px] sub truncate">${TYPES[f.type].label}</div></div><span class="text-[12px]">${pct(f.perf)}</span>${starEl(f.id)}</div>`).join('')+`</div>`
+     :`<div class="p-5 text-center text-[12px] sub">ยังไม่มีกองที่ติดตาม<br>กดรูปดาว ☆ เพื่อเพิ่ม</div>`);}
+function gotoFund(id){const f=FUNDS.find(x=>x.id===id);if(!f)return;document.getElementById('watchPanel').classList.add('hidden');
+  state.tab=f.type;state.scope=null;state.scopeMode=f.type==='offshore'?'region':f.type==='thai'?'thaiIndustry':'sector';state.themeSelections=[];state.stockScopeSelections=[];state.themeView='interesting';state.search='';state.filt={};state.quick={wrapper:'',amc:'',dividend:'',minInvest:''};state.metric={};state.metricOpen=new Set();state.advOpen=false;state.open=new Set([id]);computeScopes();computeEntities();const ent=!isStockTab()&&ENTS.find(e=>e.members.some(m=>m.id===id));state.groups=ent?[ent.id]:[];document.getElementById('search').value='';render();
+  setTimeout(()=>{const c=document.getElementById('card-'+sid(id));if(c)c.scrollIntoView({behavior:'smooth',block:'center'});},90);}
+document.addEventListener('click',ev=>{const p=document.getElementById('watchPanel');if(!p||p.classList.contains('hidden'))return;if(!p.contains(ev.target)&&!ev.target.closest('#watchBtn'))p.classList.add('hidden');});
+function scrollCmp(){document.getElementById('cmp').scrollIntoView({behavior:'smooth'});}
+function updateCmpBtn(){document.getElementById('cmpN').textContent=pins.length;document.getElementById('cmpBtn').classList.toggle('hidden',pins.length<2);}
+function renderCompare(){const wrap=document.getElementById('cmp');const items=pins.map(id=>FUNDS.find(f=>f.id===id)).filter(Boolean);
+  if(items.length<2){wrap.classList.add('hidden');wrap.innerHTML='';return;}wrap.classList.remove('hidden');
+  const rows=[['ประเภท',f=>TYPES[f.type].label],['1Y Return',f=>pct(f.perf)],['Sharpe Ratio',f=>`<b class="num">${f.st.sharpe}</b>`],['Max Drawdown',f=>`<b class="num text-neg-600">${f.st.maxdd}%</b>`],['เงินปันผล',f=>`<b class="num text-pos-600">${f.div.toFixed(1)}%</b>`],['TER (ค่าธรรมเนียม)',f=>`<b class="num">${f.fee.toFixed(2)}%</b>`],['Master Fund',f=>f.master||'—']];
+  wrap.innerHTML=`<div class="surf rounded-xl cs overflow-hidden" style="border:2px solid ${TYPES[state.tab].acc}"><div class="gb text-white px-3 py-2 flex items-center gap-2 text-[13px] font-bold">🔬 เปรียบเทียบกองที่เลือก (${items.length})<button onclick="pins=[];savePins();render()" class="ml-auto text-white/80 text-[11px]">ล้าง ✕</button></div>
+    <div class="overflow-x-auto"><table class="w-full text-[11px]"><thead><tr class="surf2"><th class="text-left p-2 sub sticky left-0 surf2">ข้อมูล</th>${items.map(f=>`<th class="p-2 text-left font-extrabold min-w-[130px]">${f.id}<div class="text-[10px] sub font-normal">${f.amc}</div></th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r=>`<tr><td class="p-2 sub sticky left-0 surf">${r[0]}</td>${items.map(f=>`<td class="p-2">${r[1](f)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;}
+
+/* ================= RENDER ================= */
+function render(){state.search=document.getElementById('search').value;const t=TYPES[state.tab];
+  document.getElementById('pt').textContent=t.label;document.getElementById('ps').textContent=t.sub;
+  document.getElementById('search').placeholder=isStockTab()?'ค้นหาชื่อกองทุน / หุ้นที่ถือ (NVIDIA, Microsoft, PTT, ADVANC)':'ค้นหาชื่อกองทุน / Master Fund / หุ้นที่ถือ (NVIDIA, Samsung, PTT)';
+  computeScopes();computeEntities();state.groups=state.groups.filter(id=>ENTS.some(e=>e.id===id));renderTabs();renderTrend();renderCards();renderSelectionBar();renderInsight();renderQuickFilters();renderFilters();
+  const list=currentFunds();
+  document.getElementById('cnt').textContent=`พบ ${list.length} กองทุน`;
+  document.getElementById('tableHeading').textContent=isStockTab()?`⑤ กองทุนไทยที่${state.groups.length?'ถือหุ้นที่เลือก':'ลงทุนตรงในหุ้น'+(state.tab==='offshore'?'ต่างประเทศ':'ไทย')}`:'⑤ ตารางกองทุนที่เกี่ยวข้อง';
+  renderFundTable(list);
+  const opened=list.filter(f=>state.open.has(f.id)),drawerHeading=document.getElementById('drawerHeading');drawerHeading.classList.toggle('hidden',!opened.length);drawerHeading.innerHTML=opened.length?`<div class="flex items-center gap-2"><span class="text-[11px] font-bold sub uppercase tracking-wide">⑥ รายละเอียดกองทุนที่เปิด</span><span class="num text-[9px] font-bold px-2 py-0.5 rounded-full surf brd">${opened.length} กอง</span><button onclick="closeAllFunds()" class="ml-auto text-[10px] font-bold px-2.5 py-1 rounded-lg surf brd">ปิดทั้งหมด ✕</button></div>`:'';document.getElementById('list').innerHTML=opened.map(f=>`<div id="card-${sid(f.id)}">${fundRow(f)}</div>`).join('');
+  document.getElementById('empty').classList.add('hidden');
+  FUNDS.filter(f=>!state.open.has(f.id)).forEach(f=>{destroyChart(sid(f.id)+'-cyr');destroyChart(sid(f.id)+'-asset');});
+  opened.forEach(f=>{buildCyr(f);buildAsset(f);});
+  renderCompare();updateCmpBtn();updateWatchCount();
+  document.getElementById('themeBtn').textContent=document.documentElement.classList.contains('dark')?'☀️':'🌙';
+}
+autoSelect();render();
+</script>
+</body>
+</html>
