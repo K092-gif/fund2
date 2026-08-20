@@ -500,20 +500,23 @@ function getDividendHistoryHTML(f) {
     `;
   }
   const h = [...f.id].reduce((a,c)=>a+c.charCodeAt(0),0);
-  const years = [2568, 2567, 2567, 2566];
-  const months = ['มิ.ย.', 'ธ.ค.', 'มิ.ย.', 'ธ.ค.'];
+  const years = [2569, 2569, 2568, 2568, 2567, 2567, 2566, 2566, 2565, 2565];
+  const months = ['ก.ค.', 'ก.พ.', 'พ.ย.', 'ก.ค.', 'เม.ย.', 'ม.ค.', 'ก.ย.', 'พ.ค.', 'พ.ย.', 'พ.ค.'];
   const divValue = f.div / 2;
   
   return years.map((y, idx) => {
-    const closedDate = `${(h + idx * 7) % 25 + 1} ${months[idx]} ${y}`;
-    const paidDate = `${(h + idx * 7) % 25 + 5} ${months[idx]} ${y}`;
-    const amount = (divValue * (1 - idx * 0.05)).toFixed(4);
+    const shortYear = y.toString().substring(2);
+    const closedDate = `${(h + idx * 7) % 25 + 1} ${months[idx]} ${shortYear}`;
+    const paidDate = `${(h + idx * 7) % 25 + 5} ${months[idx]} ${shortYear}`;
+    const amount = (divValue * (1 - idx * 0.05)).toFixed(1);
+    
+    const rowClass = idx >= 5 ? 'dividend-row-extra hidden' : 'dividend-row';
     
     return `
-      <tr class="border-b border-slate-100 dark:border-slate-800/40 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 text-sm">
-        <td class="p-3 font-medium text-slate-700 dark:text-slate-300">วันที่ ${closedDate}</td>
-        <td class="p-3 text-slate-600 dark:text-slate-400">วันที่ ${paidDate}</td>
-        <td class="p-3 text-right num font-extrabold text-brand-600 dark:text-brand-400">${amount} บาท</td>
+      <tr class="border-b border-slate-100 dark:border-slate-800/40 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 text-sm ${rowClass}">
+        <td class="p-3 font-medium text-slate-700 dark:text-slate-300">${closedDate}</td>
+        <td class="p-3 text-slate-600 dark:text-slate-400">${paidDate}</td>
+        <td class="p-3 text-right num font-extrabold text-brand-600 dark:text-brand-400">${amount}</td>
       </tr>
     `;
   }).join('');
@@ -937,6 +940,38 @@ function renderAllCharts() {
   renderPortfolioCharts();
 }
 
+function toggleDividends() {
+  const extraRows = document.querySelectorAll('.dividend-row-extra');
+  const btn = document.getElementById('btn-toggle-dividends');
+  if (!btn || extraRows.length === 0) return;
+  
+  const isHidden = extraRows[0].classList.contains('hidden');
+  
+  extraRows.forEach(row => {
+    if (isHidden) {
+      row.classList.remove('hidden');
+    } else {
+      row.classList.add('hidden');
+    }
+  });
+  
+  if (isHidden) {
+    btn.innerHTML = `
+      <span>แสดงน้อยลง</span>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 rotate-180 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+      </svg>
+    `;
+  } else {
+    btn.innerHTML = `
+      <span>ดูทั้งหมด</span>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+      </svg>
+    `;
+  }
+}
+
 function init() {
   const container = document.getElementById('mainContainer');
   
@@ -1219,9 +1254,9 @@ function init() {
               <table class="w-full text-sm text-left">
                 <thead>
                   <tr class="bg-slate-50 dark:bg-slate-800/50 sub border-b border-slate-200 dark:border-slate-800 font-bold">
-                    <th class="p-3 font-sans">วันปิดพอร์ตปันผล</th>
-                    <th class="p-3 font-sans">วันจ่ายจ่ายปันผล</th>
-                    <th class="p-3 text-right font-sans">จำนวนเงินจ่าย</th>
+                    <th class="p-3 font-sans">วันที่ปิดสมุดทะเบียน</th>
+                    <th class="p-3 font-sans">วันที่ปันผล</th>
+                    <th class="p-3 text-right font-sans">จำนวนเงิน(บาท)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1229,6 +1264,16 @@ function init() {
                 </tbody>
               </table>
             </div>
+            ${fund.div > 0 ? `
+            <div class="mt-4 flex justify-center">
+              <button id="btn-toggle-dividends" onclick="toggleDividends()" class="px-6 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition flex items-center gap-1.5 font-sans">
+                <span>ดูทั้งหมด</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-400 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
+            ` : ''}
           </div>
         </div>
       </div>
