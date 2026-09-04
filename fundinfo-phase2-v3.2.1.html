@@ -3,117 +3,191 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fundinfo v3.2.1 — Master Fund Comparison Workspace</title>
+<title>Fundinfo — Investment Exposure Workspace | IDEA FUND</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-  tailwind.config={darkMode:'class',theme:{extend:{
-    colors:{brand:{50:'#eef4ff',100:'#dbe7ff',200:'#bcd0ff',300:'#8fb0ff',500:'#3b6ef6',600:'#2456d8',700:'#1c43ad',800:'#17378e'},
-      pos:{50:'#ecfdf3',500:'#12b76a',600:'#059669',700:'#047857'},
-      neg:{50:'#fef3f2',500:'#f04438',600:'#dc2626'}},
-    fontFamily:{sans:['Prompt','"Noto Sans Thai"','sans-serif'],num:['Inter','Prompt','sans-serif']}}}};
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          brand: { 50:'#eef4ff', 100:'#dbe7ff', 200:'#bcd0ff', 300:'#8fb0ff', 500:'#3b6ef6', 600:'#2456d8', 700:'#1c43ad', 800:'#17378e' },
+          pos: { 50:'#ecfdf3', 500:'#12b76a', 600:'#059669', 700:'#047857' },
+          neg: { 50:'#fef3f2', 500:'#f04438', 600:'#dc2626' }
+        },
+        fontFamily: {
+          sans: ['Prompt', 'Noto Sans Thai', 'sans-serif'],
+          num: ['Inter', 'Prompt', 'sans-serif']
+        }
+      }
+    }
+  };
 </script>
+<!-- Unified Migrat Fundinfo Stylesheet -->
+<link rel="stylesheet" href="css/fundinfo.css">
 <style>
-  :root{--bg:#eef2f9;--surf:#ffffff;--surf2:#f5f8fd;--txt:#0f1e37;--sub:#607091;--line:#e6ecf5;--brand:#2456d8}
-  .dark{--bg:#0b1220;--surf:#151f33;--surf2:#101929;--txt:#e7edf8;--sub:#93a3c0;--line:#26324b;--brand:#5b8cff}
-  html,body{font-family:'Prompt','Noto Sans Thai',sans-serif}
-  body{background:radial-gradient(1100px 380px at 100% -8%,rgba(59,110,246,.10),transparent),var(--bg);color:var(--txt)}
-  .num{font-family:'Inter','Prompt',sans-serif;font-feature-settings:"tnum"}
-  .surf{background:var(--surf)}.surf2{background:var(--surf2)}
-  .brd{border:1px solid var(--line)}.brdt{border-top:1px solid var(--line)}.brdb{border-bottom:1px solid var(--line)}
-  .sub{color:var(--sub)}
-  ::-webkit-scrollbar{width:9px;height:8px}::-webkit-scrollbar-thumb{background:#a9b6cd;border-radius:8px}
-  .cs{box-shadow:0 1px 2px rgba(16,30,55,.05),0 10px 30px -16px rgba(16,30,55,.25)}
-  .gb{background:linear-gradient(135deg,#2456d8,#4b83ff)}
-  .rkrow{transition:background .14s,box-shadow .14s;cursor:pointer}.rkrow:hover{background:var(--surf2)}
-  .rkrow.sel{background:var(--surf2);box-shadow:inset 3px 0 0 var(--brand)}
-  .select-order{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:7px;background:var(--brand);color:#fff;font:700 10px/1 'Inter',sans-serif;flex:none}
-  .compare-card{border:1px solid var(--line);background:var(--surf);border-radius:12px;padding:10px;transition:transform .15s,box-shadow .15s}
-  .compare-card:hover{transform:translateY(-1px);box-shadow:0 8px 22px -16px rgba(16,30,55,.4)}
-  .metric-cell{background:var(--surf2);border-radius:8px;padding:6px 7px;min-width:0}
-  .metric-help{font-size:8px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-  .chart-note{background:color-mix(in srgb,var(--brand) 8%,var(--surf));border:1px solid color-mix(in srgb,var(--brand) 22%,var(--line))}
-  .scope-chip{white-space:nowrap;padding:5px 10px;border-radius:999px;font-size:10px;font-weight:700;border:1px solid var(--line);background:var(--surf);color:var(--sub);transition:.14s}
-  .scope-chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
-  .fund-table{border-collapse:separate;border-spacing:0;width:100%;font-size:11px}.fund-table th{position:sticky;top:0;z-index:8;background:var(--surf2);color:var(--sub);font-weight:700;text-align:left;padding:10px 9px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer}.fund-table td{padding:10px 9px;border-bottom:1px solid var(--line);white-space:nowrap}.fund-table tbody tr{cursor:pointer;transition:background .13s}.fund-table tbody tr:hover,.fund-table tbody tr.open{background:var(--surf2)}
-  .signal-card{border:1px solid var(--line);background:var(--surf2);border-radius:10px;padding:9px 10px;min-width:0;text-align:left;transition:.14s}.signal-card[data-scope]:hover{border-color:color-mix(in srgb,var(--brand) 48%,var(--line));transform:translateY(-1px)}
-  .theme-pulse-card{border:1px solid var(--line);background:var(--surf);border-radius:13px;padding:12px;min-width:0;text-align:left;transition:transform .15s,box-shadow .15s,border-color .15s}.theme-pulse-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px -18px rgba(16,30,55,.55)}.theme-pulse-card.on{border-color:var(--brand);box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 15%,transparent)}
-  .trend-status{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:999px;font-size:8px;font-weight:800;white-space:nowrap}
-  .filter-select{background:var(--surf);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:7px 9px;font-size:11px;outline:none;min-width:0;width:100%}
-  .star{color:#cbd5e1;cursor:pointer;font-size:15px;line-height:1}.star.on{color:#f0b429}
-  .fpill{white-space:nowrap;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--line);background:var(--surf);color:var(--sub);cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:5px}
-  .fpill:hover{border-color:#93a3c0}.fpill.on{color:#fff;border-color:transparent}
-  .frow{display:flex;gap:7px;overflow-x:auto;padding-bottom:3px;scrollbar-width:thin}.frow::-webkit-scrollbar{height:5px}
-  .tab{white-space:nowrap;padding:7px 15px;border-radius:11px;font-size:14px;font-weight:700;transition:.15s}
-  @keyframes slidedown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-  .slide{animation:slidedown .22s ease}
-  .chev{transition:transform .22s ease}.chev.open{transform:rotate(180deg)}
-  .lg{display:inline-flex;align-items:center;justify-content:center;border-radius:9px;font-weight:800;font-family:'Inter',sans-serif;color:#fff;letter-spacing:.2px}
+  /* Additional subtle helpers for smooth animations */
+  .select-order { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 7px; background: var(--brand); color: #fff; font: 700 11px/1 'Inter', sans-serif; flex: none; }
+  .rkrow { transition: background 0.14s, box-shadow 0.14s; cursor: pointer; }
+  .rkrow:hover { background: var(--surf2); }
+  .rkrow.sel { background: var(--surf2); box-shadow: inset 3px 0 0 var(--brand); }
+  .lg { display: inline-flex; align-items: center; justify-content: center; border-radius: 9px; font-weight: 800; font-family: 'Inter', sans-serif; color: #fff; letter-spacing: 0.2px; }
+  .chev { transition: transform 0.22s ease; }
+  .chev.open { transform: rotate(180deg); }
 </style>
 </head>
-<body>
+<body class="min-h-screen antialiased">
 
-<!-- ===== TOP BAR + TABS ===== -->
-<div class="surf brdb cs sticky top-0 z-30">
-  <div class="max-w-[1280px] mx-auto px-4 flex items-center gap-3 h-14">
-    <div class="flex items-center gap-2 shrink-0"><div class="w-8 h-8 rounded-lg gb text-white font-extrabold flex items-center justify-center text-xs">FI</div>
-      <div class="hidden sm:block leading-3"><b class="text-[15px]">Fundinfo</b><div class="text-[9px] sub font-semibold tracking-wide">INVESTMENT EXPOSURE WORKSPACE</div></div></div>
-    <nav id="tabs" class="flex gap-1.5 overflow-x-auto flex-1 py-2 justify-center"></nav>
-    <div class="relative shrink-0">
-      <button id="watchBtn" onclick="toggleWatch()" class="surf brd h-9 px-2.5 rounded-lg text-sm font-bold flex items-center gap-1" title="รายการติดตาม">⭐<span id="wN" class="num text-[11px]">0</span></button>
-      <div id="watchPanel" class="hidden absolute right-0 mt-2 w-72 surf brd rounded-xl cs z-50 overflow-hidden"></div>
+<!-- ===== MIGRAT FUNDINFO SCOPE & HEADER (EXACT MIGRAT FUNDINFOLAYOUT) ===== -->
+<div class="fundinfo-scope min-h-screen" id="fundinfoScope" style="--brand: #2456d8;">
+  <main class="min-h-screen bg-[var(--bg)] text-[var(--txt)] font-['Prompt'] antialiased">
+
+    <!-- Header bar matching Migrat FundinfoLayout.vue -->
+    <!-- Header bar matching Migrat FundinfoLayout.vue & screenshot -->
+    <header class="sticky top-0 z-30 surf brdb px-4 py-3.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md">
+      <div class="max-w-[1240px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 h-full">
+
+        <!-- Branding: < Fundinfo + Subtitle -->
+        <div>
+          <a href="index.html#fundinfo" class="inline-flex items-center gap-1 font-bold group" title="กลับสู่หน้า FUNDINFO">
+            <span class="text-3xl font-extrabold text-slate-800 dark:text-white transition group-hover:-translate-x-1">&lt;</span>
+            <span class="text-3xl font-extrabold txt tracking-tight">Fundinfo</span>
+          </a>
+          <div class="text-[9px] font-extrabold uppercase tracking-widest sub mt-0.5">INVESTMENT EXPOSURE WORKSPACE</div>
+        </div>
+
+        <div class="flex items-center gap-3 justify-between md:justify-end">
+          <!-- Fund type tabs -->
+          <nav id="tabs" class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0" aria-label="ประเภทกองทุน"></nav>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <!-- Wishlist Trigger & Dropdown -->
+            <div class="relative">
+              <button
+                type="button"
+                id="watchBtn"
+                class="wishlist-trigger surf brd h-9 px-2.5 rounded-lg font-bold flex items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                title="รายการติดตาม"
+                onclick="toggleWatch()"
+              >
+                <span class="wishlist-icon text-amber-500 text-sm" aria-hidden="true">★</span>
+                <span id="wN" class="num text-xs font-bold txt">0</span>
+              </button>
+
+              <div
+                id="watchPanel"
+                class="hidden absolute right-0 mt-2 w-72 surf brd rounded-2xl z-50 overflow-hidden shadow-xl"
+              ></div>
+            </div>
+
+            <!-- Dark mode toggle -->
+            <button
+              type="button"
+              id="themeBtn"
+              class="surf brd w-9 h-9 rounded-lg shrink-0 flex items-center justify-center text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+              title="สลับโหมดมืด/สว่าง"
+              onclick="toggleTheme()"
+            >
+              🌙
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <div class="max-w-[1240px] mx-auto px-4 py-6">
+      <div class="fund-workspace space-y-8">
+        <div class="fund-page-title">
+          <h1 id="pt" class="text-3xl font-black txt">Feeder Fund</h1>
+          <p id="ps" class="text-xs sub mt-1">สำรวจและเปรียบเทียบ Master Fund ก่อนค้นหากองทุนไทยที่เข้าถึงได้</p>
+        </div>
+
+        <!-- ===== SECTION 1: THEME / EXPOSURE TREND ===== -->
+        <div id="trendWrap"></div>
+
+        <!-- ===== SECTION 2: RANKING CARDS ===== -->
+        <div id="rankingSection" class="ranking-workspace">
+          <div id="rankingHeading" class="ranking-heading"></div>
+          <div id="cards" class="ranking-card-grid"></div>
+          <div id="selectionBar" class="ranking-summary"></div>
+        </div>
+
+        <!-- ===== SECTION 3: MASTER FUND COMPARISON ===== -->
+        <div id="insightWrap" class="comparison-workspace"></div>
+
+        <!-- ===== SECTION 4 & 5: FUND SCREENER & TABLE ===== -->
+        <div class="fund-screener-anchor">
+          <div id="screenerSection" class="screener-workspace">
+            <div class="screener-heading flex items-center justify-between gap-3 mb-3">
+              <h2 id="screenerTitle" class="text-lg font-bold txt">ค้นหาและคัดกรองกองทุนไทย</h2>
+              <button id="cmpBtn" onclick="scrollCmp()" class="screener-compare-button px-4 py-2 rounded-xl bg-brand-600 text-white font-bold text-xs shadow-xs hover:bg-brand-700 transition">
+                เปรียบเทียบกองที่เลือก (<span id="cmpN" class="num">0/4</span>)
+              </button>
+            </div>
+
+            <div class="screener-search-row flex items-center gap-3 mb-3">
+              <div class="screener-search-input flex-1 flex items-center gap-2 surf brd rounded-xl px-3.5 py-2">
+                <span class="text-slate-400">⌕</span>
+                <input id="search" oninput="render()" placeholder="ค้นหาชื่อกองทุน / Master Fund / หุ้นที่ถือ (NVIDIA, Microsoft, PTT, ADVANC)" class="w-full bg-transparent outline-none text-xs txt">
+              </div>
+              <span id="cnt" class="screener-count text-xs sub font-bold whitespace-nowrap"></span>
+              <button id="advBtn" onclick="toggleAdv()" class="screener-filter-toggle px-3 py-2 rounded-xl surf2 brd text-xs font-bold whitespace-nowrap">
+                ตัวกรองเพิ่มเติม<span id="advN" class="hidden"></span>
+              </button>
+            </div>
+
+            <div id="quickFilters" class="mt-3"></div>
+            <div id="advFilter" class="mt-3"></div>
+          </div>
+
+          <div id="resultsSection" class="fund-results mt-6">
+            <div class="fund-results-heading flex items-center justify-between gap-3 mb-2">
+              <h2 id="tableHeading" class="text-sm font-bold txt"></h2>
+              <button type="button" class="fund-sort-button text-xs font-bold px-3 py-1.5 rounded-lg surf2 brd sub" onclick="sortRiskHighToLow()">
+                ความเสี่ยงสูง → ต่ำ ⭥
+              </button>
+            </div>
+            <div id="tableWrap" class="fund-results-table"></div>
+            <div id="cmp" class="my-6"></div>
+            <div id="drawerHeading" class="hidden my-2"></div>
+            <div id="list" class="space-y-3"></div>
+            <div id="empty" class="hidden text-center py-14 sub"><div class="text-3xl mb-2">🔍</div>ไม่พบกองทุนที่ตรงเงื่อนไข</div>
+          </div>
+        </div>
+
+        <p class="fund-results-footnote text-center text-[11px] sub mt-8">Fundinfo v3.2.1 · Master Fund Comparison Workspace · ข้อมูลเพื่อการวิเคราะห์ ไม่ใช่คำแนะนำการลงทุน</p>
+      </div>
     </div>
-    <button id="themeBtn" onclick="toggleTheme()" class="surf brd w-9 h-9 rounded-lg shrink-0" title="สลับโหมด">🌙</button>
-  </div>
-</div>
 
-<div class="max-w-[1280px] mx-auto px-4 py-4">
-  <div class="mb-3 flex items-end justify-between gap-3 flex-wrap">
-    <div><h1 id="pt" class="text-[19px] font-extrabold leading-5"></h1><p id="ps" class="text-xs sub mt-0.5"></p></div>
-  </div>
-
-  <!-- ===== SECTION 1: THEME / SECTOR TREND ===== -->
-  <div id="trendWrap" class="mb-5"></div>
-
-  <!-- ===== SECTION 2: RANKING CARDS ===== -->
-  <div id="rankingHeading" class="text-[11px] font-bold sub uppercase tracking-wide mb-1.5">② อันดับภายในขอบเขตที่เลือก</div>
-  <div id="cards" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2"></div>
-  <div id="selectionBar" class="hidden mb-5"></div>
-
-  <!-- ===== SECTION 3: MASTER FUND COMPARISON ===== -->
-  <div id="insightWrap" class="mb-5"></div>
-
-  <!-- ===== SECTION 4: FUND SCREENER ===== -->
-  <div class="flex items-center justify-between mb-1.5">
-    <div class="text-[11px] font-bold sub uppercase tracking-wide">④ ค้นหาและคัดกรองกองทุนไทย</div>
-    <button id="cmpBtn" onclick="scrollCmp()" class="px-3 py-1.5 rounded-lg gb text-white text-xs font-bold hidden">เปรียบเทียบกองที่เลือก (<span id="cmpN" class="num">0</span>)</button>
-  </div>
-  <div class="surf brd rounded-xl cs p-2.5 mb-2 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
-    <div class="flex-1 flex items-center gap-2 surf2 brd rounded-lg px-3 py-2"><span class="sub text-sm">🔎</span>
-      <input id="search" oninput="render()" class="flex-1 bg-transparent outline-none text-sm" style="color:var(--txt)" placeholder="ค้นหาชื่อกองทุน / Master Fund / หุ้นที่ถือ (NVIDIA, Samsung, PTT)"></div>
-    <div class="flex items-center gap-2 text-xs">
-      <span id="cnt" class="num px-3 py-2 rounded-lg bg-brand-50 text-brand-700 font-bold whitespace-nowrap"></span>
-      <button id="advBtn" onclick="toggleAdv()" class="px-3 py-2 rounded-lg surf2 brd font-bold flex items-center gap-1.5 transition" title="ตัวกรองเพิ่มเติม">⚙️ ตัวกรองเพิ่มเติม<span id="advN" class="hidden num text-white text-[10px] font-extrabold rounded-full px-1.5 min-w-[16px] text-center"></span></button>
-    </div>
-  </div>
-  <div id="quickFilters" class="mb-2"></div>
-  <div id="advFilter" class="mb-2"></div>
-  <div id="tableHeading" class="text-[11px] font-bold sub uppercase tracking-wide mb-1.5">⑤ ตารางกองทุนที่เกี่ยวข้อง</div>
-  <div id="tableWrap" class="surf brd rounded-xl cs overflow-x-auto mb-3"></div>
-  <div id="cmp" class="hidden mb-3"></div>
-  <div id="drawerHeading" class="hidden mb-1.5"></div>
-  <div id="list" class="flex flex-col gap-2.5"></div>
-  <div id="empty" class="hidden text-center py-14 sub"><div class="text-3xl mb-2">🔍</div>ไม่พบกองทุนที่ตรงเงื่อนไข</div>
-  <p class="text-center text-[11px] sub mt-8">Fundinfo v3.2.1 · Master Fund Comparison Workspace · ต้นแบบเพื่อการออกแบบ ตัวเลขเป็นข้อมูลตัวอย่าง ไม่ใช่คำแนะนำการลงทุน</p>
+  </main>
 </div>
 
 <script>
 /* ================= THEME ================= */
-(function(){try{if(localStorage.getItem('fi32-theme')==='dark')document.documentElement.classList.add('dark');}catch(e){}})();
-function toggleTheme(){const d=document.documentElement.classList.toggle('dark');try{localStorage.setItem('fi32-theme',d?'dark':'light')}catch(e){}document.getElementById('themeBtn').textContent=d?'☀️':'🌙';render();}
+(function(){
+  try {
+    if(localStorage.getItem('fi32-theme')==='dark' || (!localStorage.getItem('fi32-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+      const scopeEl = document.getElementById('fundinfoScope');
+      if (scopeEl) scopeEl.classList.add('dark');
+    }
+  } catch(e) {}
+})();
+function toggleTheme(){
+  const d = document.documentElement.classList.toggle('dark');
+  const scopeEl = document.getElementById('fundinfoScope');
+  if (scopeEl) scopeEl.classList.toggle('dark', d);
+  try{localStorage.setItem('fi32-theme', d ? 'dark' : 'light');}catch(e){}
+  const btn = document.getElementById('themeBtn');
+  if (btn) btn.textContent = d ? '☀️' : '🌙';
+  render();
+}
 
 /* ================= FUND TYPES ================= */
 const TYPES={
@@ -299,7 +373,11 @@ const INSIGHT={
 
 /* ================= STATE ================= */
 let pins;try{pins=JSON.parse(localStorage.getItem('fi321-pins'))||['SCBNDQ','TNDQ']}catch(e){pins=['SCBNDQ','TNDQ']}
-const state={tab:'feeder',scope:null,scopeMode:'sector',themeSelections:[],stockScopeSelections:[],themeView:'interesting',search:'',rk:{flow:'m1',ret:'y1'},groups:[],filt:{},quick:{wrapper:'',amc:'',dividend:'',minInvest:''},metric:{},metricOpen:new Set(),sort:{key:'risk',dir:'asc'},advOpen:false,open:new Set()};
+const _urlParams = new URLSearchParams(window.location.search);
+const _reqTab = _urlParams.get('tab') || _urlParams.get('type') || (window.location.hash ? window.location.hash.replace('#', '') : 'feeder');
+const _validTabs = ['feeder', 'offshore', 'thai', 'mixed'];
+const _activeTab = _validTabs.includes(_reqTab) ? _reqTab : 'feeder';
+const state={tab:_activeTab,scope:null,scopeMode:_activeTab==='offshore'?'region':_activeTab==='thai'?'thaiIndustry':'sector',themeSelections:[],stockScopeSelections:[],themeView:'interesting',search:'',rk:{flow:'m1',ret:'y1'},groups:[],filt:{},quick:{wrapper:'',amc:'',dividend:'',minInvest:''},metric:{},metricOpen:new Set(),sort:{key:'risk',dir:'asc'},advOpen:false,open:new Set()};
 let ENTS=[],SCOPES=[]; const charts={};
 try{if(window.Chart){Chart.defaults.color='#8090ad';Chart.defaults.font.family='Inter,Prompt,sans-serif';}}catch(e){}
 
@@ -331,9 +409,43 @@ function stackBar(arr){const seg=arr.map((a,i)=>`<span title="${a[0]} ${a[2]}%" 
 const pdfLink=(label)=>`<a href="#" onclick="event.preventDefault();alert('ตัวอย่าง: เปิดเอกสาร ${label} (PDF)')" class="inline-flex items-center gap-1.5 text-[11px] font-semibold" style="color:var(--brand)"><span class="lg" style="width:22px;height:20px;background:#dc2626;font-size:8px">PDF</span>${label}</a>`;
 
 /* ================= TABS ================= */
-function renderTabs(){document.getElementById('tabs').innerHTML=Object.entries(TYPES).map(([k,t])=>{const on=state.tab===k;
-  return `<button onclick="setTab('${k}')" class="tab ${on?'text-white cs':'sub hover:opacity-80'}" style="${on?`background:${t.acc}`:''}">${t.emoji} ${t.label}</button>`;}).join('');}
-function setTab(k){state.tab=k;state.scope=null;state.scopeMode=k==='offshore'?'region':k==='thai'?'thaiIndustry':'sector';state.themeSelections=[];state.stockScopeSelections=[];state.themeView='interesting';state.search='';state.groups=[];state.filt={};state.quick={wrapper:'',amc:'',dividend:'',minInvest:''};state.metric={};state.metricOpen=new Set();state.sort={key:'risk',dir:'asc'};state.advOpen=false;state.open=new Set();document.getElementById('search').value='';autoSelect();render();window.scrollTo({top:0,behavior:'smooth'});}
+function renderTabs(){
+  const scopeEl = document.getElementById('fundinfoScope');
+  if (scopeEl) scopeEl.style.setProperty('--brand', TYPES[state.tab].acc);
+  document.getElementById('tabs').innerHTML = Object.entries(TYPES).map(([k, t]) => {
+    const on = state.tab === k;
+    return `<button type="button" onclick="setTab('${k}')" class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap border ${on ? '!bg-[var(--brand)] !text-white !border-[var(--brand)] shadow-md shadow-brand-500/25' : 'border-transparent sub hover:surf2 hover:txt'}"><span class="text-base">${t.emoji}</span><span>${t.label}</span></button>`;
+  }).join('');
+}
+function setTab(k){
+  state.tab = k;
+  const scopeEl = document.getElementById('fundinfoScope');
+  if (scopeEl) scopeEl.style.setProperty('--brand', TYPES[k].acc);
+  try {
+    const url = new URL(window.location);
+    url.searchParams.set('tab', k);
+    window.history.replaceState({}, '', url);
+  } catch(e) {}
+  state.scope = null;
+  state.scopeMode = k==='offshore'?'region':k==='thai'?'thaiIndustry':'sector';
+  state.themeSelections = [];
+  state.stockScopeSelections = [];
+  state.themeView = 'interesting';
+  state.search = '';
+  state.groups = [];
+  state.filt = {};
+  state.quick = {wrapper:'',amc:'',dividend:'',minInvest:''};
+  state.metric = {};
+  state.metricOpen = new Set();
+  state.sort = {key:'risk',dir:'asc'};
+  state.advOpen = false;
+  state.open = new Set();
+  const sInput = document.getElementById('search');
+  if (sInput) sInput.value = '';
+  autoSelect();
+  render();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 
 /* ================= ENTITIES ================= */
 function selectedScopeStocks(scope){const ids=Array.isArray(scope)?scope:scope?[scope]:[],names=new Set();ids.forEach(id=>{const sc=SCOPES.find(s=>s.id===id);if(sc)(sc.stocks||[]).forEach(name=>names.add(name));});return names;}
@@ -358,7 +470,19 @@ function computeEntities(){const fs=funds();
   const avg=a=>+(a.reduce((s,x)=>s+x,0)/a.length).toFixed(1),sum=a=>a.reduce((s,x)=>s+x,0);
   ENTS=Object.entries(g).map(([k,ms],i)=>{const flowP={},retP={};['w1','m1','y1'].forEach(p=>flowP[p]=sum(ms.map(m=>m.flowP[p])));['m1','q1','y1','y3','y5'].forEach(p=>retP[p]=avg(ms.map(m=>m.retP[p])));
     return{idx:i,kind:state.tab==='feeder'?'master':'theme',id:k,title:k,members:ms,perf:avg(ms.map(m=>m.perf)),pop:sum(ms.map(m=>m.pop)),div:Math.max(...ms.map(m=>m.div)),flowP,retP};});}
-function autoSelect(){computeScopes();computeEntities();state.groups=[];}
+function autoSelect(){
+  computeScopes();
+  computeEntities();
+  if(state.tab === 'feeder'){
+    state.themeSelections = ['Gold (สินทรัพย์ปลอดภัย)', 'US Technology (NASDAQ-100)', 'Korea Equity'];
+    state.groups = ['Invesco NASDAQ-100 ETF', 'SPDR Gold Shares'];
+    pins = ['SCBNDQ', 'TNDQ'];
+    savePins();
+    state.open = new Set(['SCBNDQ']);
+  } else {
+    state.groups = [];
+  }
+}
 
 /* ================= SECTION 1: THEME / SECTOR TREND ================= */
 function setScope(id){if(isStockTab()){if(!id)state.stockScopeSelections=[];else{const at=state.stockScopeSelections.indexOf(id);if(at>-1)state.stockScopeSelections.splice(at,1);else if(state.stockScopeSelections.length<5)state.stockScopeSelections.push(id);else{alert('เลือกเปรียบเทียบได้สูงสุด 5 กลุ่ม');return;}}state.scope=null;}else state.scope=id||null;state.groups=[];state.open=new Set();render();}
@@ -369,15 +493,164 @@ function clearThemeChoices(){state.themeSelections=[];state.groups=[];state.open
 function filterThemeCards(value){const q=value.trim().toLowerCase();document.querySelectorAll('[data-theme-search]').forEach(el=>el.classList.toggle('hidden',q&&!el.dataset.themeSearch.includes(q)));}
 function themePulseStats(scope,index){const series=trendSeries(scope),members=scope.members,m1=+(members.reduce((s,f)=>s+f.retP.m1,0)/members.length).toFixed(1),q1=+(members.reduce((s,f)=>s+f.retP.q1,0)/members.length).toFixed(1),prior=+(series.at(-4)-series.at(-7)).toFixed(1),momentum=+(series.at(-1)-series.at(-4)).toFixed(1),flow=members.reduce((s,f)=>s+f.flowP.m1,0);return{scope,index,series,m1,q1,prior,momentum,accel:+(momentum-prior).toFixed(1),flow,vsGlobal:+(scope.perf-GLOBAL_RETURN).toFixed(1),fundCount:members.length,sparkColor:scope.perf>=0?'#0e9f6e':'#dc2626'};}
 function themeStatus(s){if(s.momentum>0&&s.accel>1)return{label:'↗ เร่งขึ้น',bg:'#ecfdf3',color:'#047857'};if(s.momentum>0&&s.accel<-1)return{label:'→ บวกแต่ชะลอ',bg:'#f4f0ff',color:'#6941c6'};if(s.momentum<0&&s.accel>1)return{label:'↗ เริ่มฟื้น',bg:'#fff7e6',color:'#b45309'};if(s.momentum<0)return{label:'↘ อ่อนตัว',bg:'#fef3f2',color:'#dc2626'};return{label:'→ ทรงตัว',bg:'var(--surf2)',color:'var(--sub)'};}
-function buildThemePulseCharts(stats){stats.forEach(s=>{const id='theme-spark-'+sid(s.scope.id),el=document.getElementById(id);if(!el)return;destroyChart(id);charts[id]=new Chart(el,{type:'line',data:{labels:CMP_LABELS,datasets:[{data:s.series,borderColor:s.sparkColor,backgroundColor:s.sparkColor+'18',borderWidth:2.2,pointRadius:0,tension:.32,fill:true}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}});});}
-function buildThemeDetailChart(selected){const id='scope-trend-chart',el=document.getElementById(id);if(!el)return;destroyChart(id);const datasets=selected.map((s,i)=>({label:`${i+1}. ${s.scope.title}`,data:s.series,borderColor:COMPARE_COLORS[i],backgroundColor:COMPARE_COLORS[i],borderWidth:2.7,borderDash:COMPARE_DASH[i],pointRadius:0,pointHoverRadius:4,tension:.3,fill:false}));datasets.push({label:'MSCI ACWI · จุดอ้างอิง',data:performanceSeries(731,GLOBAL_RETURN,CMP_LABELS.length),borderColor:'#7b879d',backgroundColor:'#7b879d',borderWidth:2,borderDash:[6,4],pointRadius:0,pointHoverRadius:4,tension:.3,fill:false});charts[id]=new Chart(el,{type:'line',data:{labels:CMP_LABELS,datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,pointStyle:'line',boxWidth:22,font:{size:9}}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${(c.parsed.y-100).toFixed(1)}%`}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:7}},y:{ticks:{font:{size:9},callback:v=>(v-100)+'%'},grid:{color:'rgba(148,163,184,.15)'}}}}});}
-function renderThemePulse(wrap){const stats=SCOPES.map(themePulseStats),accelerating=stats.filter(s=>s.accel>1).length,outperform=stats.filter(s=>s.vsGlobal>0).length,positive=stats.filter(s=>s.scope.perf>0).length,interesting=[...stats].sort((a,b)=>b.q1-a.q1||b.flow-a.flow).slice(0,3),displayStats=state.themeView==='interesting'?interesting:stats,selected=state.themeSelections.map(id=>stats.find(s=>s.scope.id===id)).filter(Boolean);
-  const cards=displayStats.map(s=>{const status=themeStatus(s),order=state.themeSelections.indexOf(s.scope.id),positive1Y=s.scope.perf>=0;return`<button data-theme-search="${(s.scope.title+' '+s.scope.members.map(f=>f.master).join(' ')).toLowerCase()}" onclick="toggleThemeChoice('${s.scope.id.replace(/'/g,"\\'")}')" class="theme-pulse-card ${order>-1?'on':''}" aria-label="${order>-1?'นำออก':'เลือก'}ธีม ${s.scope.title}"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-[9px] sub font-bold">THEME ${order>-1?`· เลือกลำดับ ${order+1}`:''}</div><div class="text-[12px] font-extrabold truncate" title="${s.scope.title}">${s.scope.title}</div></div><div class="flex items-center gap-1">${order>-1?`<span class="select-order">${order+1}</span>`:''}<span class="trend-status" style="background:${status.bg};color:${status.color}">${status.label}</span></div></div><div class="h-16 mt-1"><canvas id="theme-spark-${sid(s.scope.id)}" aria-label="แนวโน้ม 1 ปี ${s.scope.title} สี${positive1Y?'เขียว':'แดง'}"></canvas></div><div class="text-[8px] font-bold mb-1" style="color:${s.sparkColor}">1YTD</div><div class="grid grid-cols-3 gap-1.5 mb-2"><div class="metric-cell"><div class="text-[8px] sub">1M</div><div class="text-[11px]">${pct(s.m1)}</div></div><div class="metric-cell"><div class="text-[8px] sub">3M</div><div class="text-[11px]">${pct(s.q1)}</div></div><div class="metric-cell"><div class="text-[8px] sub">1Y</div><div class="text-[11px]">${pct(s.scope.perf)}</div></div></div><div class="grid grid-cols-3 gap-2 text-[8px] sub"><span>vs Global<br><b class="num" style="color:${s.vsGlobal>=0?'#059669':'#dc2626'}">${s.vsGlobal>0?'+':''}${s.vsGlobal}%</b></span><span>Fund Flow 1M<br><b class="num" style="color:var(--txt)">${s.flow>0?'+':''}฿${money(s.flow)}</b></span><span>กองทุนไทย<br><b class="num" style="color:var(--txt)">${s.fundCount} กอง</b></span></div></button>`;}).join('');
-  const chosen=selected.length?`<div class="flex items-center gap-1.5 flex-wrap mt-3"><span class="text-[9px] font-bold sub">ธีมที่เลือก ${selected.length}/7:</span>${selected.map((s,i)=>`<button onclick="toggleThemeChoice('${s.scope.id.replace(/'/g,"\\'")}')" class="scope-chip on" style="background:${COMPARE_COLORS[i]};border-color:${COMPARE_COLORS[i]}">${i+1}. ${s.scope.title} ✕</button>`).join('')}<button onclick="clearThemeChoices()" class="text-[9px] font-bold px-2 py-1">ล้างทั้งหมด</button></div>`:'';
-  const detail=selected.length?`<div class="mt-3 pt-3 brdt slide"><div class="flex items-center justify-between gap-2 mb-2"><div><b class="text-[12px]">เปรียบเทียบ ${selected.length} ธีมบนกราฟเดียวกัน</b><div class="text-[9px] sub">สีประจำธีมเริ่มใช้ในกราฟนี้ เพื่อแยกเส้นตามลำดับที่เลือก</div></div><button onclick="clearThemeChoices()" class="text-[9px] font-bold px-2.5 py-1 rounded-lg surf2 brd">ล้างกราฟ ✕</button></div><div class="grid lg:grid-cols-[minmax(0,2fr)_minmax(260px,.75fr)] gap-3"><div class="h-72 surf2 brd rounded-xl p-2"><canvas id="scope-trend-chart" aria-label="กราฟเปรียบเทียบธีมที่เลือกกับ MSCI ACWI"></canvas></div><div class="surf2 brd rounded-xl p-3"><div class="text-[10px] font-bold mb-2">ธีมในกราฟ</div><div class="space-y-2">${selected.map((s,i)=>`<div class="surf brd rounded-lg p-2"><div class="flex items-center gap-1.5"><span class="w-3 h-1 rounded-full" style="background:${COMPARE_COLORS[i]}"></span><b class="text-[9px] truncate">${i+1}. ${s.scope.title}</b></div><div class="grid grid-cols-3 gap-1 text-[8px] sub mt-1"><span>3M <b class="num" style="color:var(--txt)">${s.q1>0?'+':''}${s.q1}%</b></span><span>1Y <b class="num" style="color:var(--txt)">${s.scope.perf>0?'+':''}${s.scope.perf}%</b></span><span>vs Global <b class="num" style="color:var(--txt)">${s.vsGlobal>0?'+':''}${s.vsGlobal}%</b></span></div></div>`).join('')}</div><div class="text-[8px] sub mt-2 pt-2 brdt">เปรียบเทียบทิศทาง ไม่ใช่สัญญาณซื้อขาย</div></div></div></div>`:`<div class="mt-3 rounded-lg surf2 brd px-3 py-2 text-[9px] sub">เลือกได้หลายธีมจากการ์ดด้านบน แล้วระบบจะแสดงทุกธีมบนกราฟเดียวกันพร้อม MSCI ACWI</div>`;
-  const picker=state.themeView==='all'?`<div class="flex items-center gap-2 mb-3"><div class="flex-1 flex items-center gap-2 surf2 brd rounded-lg px-3 py-2"><span>🔎</span><input id="theme-search" aria-label="ค้นหาธีมหรือ Master Fund" oninput="filterThemeCards(this.value)" class="flex-1 bg-transparent outline-none text-[10px]" style="color:var(--txt)" placeholder="ค้นหาธีมหรือ Master Fund ที่สนใจ"></div><span class="text-[9px] sub">เลือกได้สูงสุด 7 ธีม</span></div>`:`<div class="text-[9px] sub mb-3">แสดง 3 ธีมที่มีโมเมนตัม 3 เดือนเด่นในข้อมูลตัวอย่าง ไม่ใช่คำแนะนำลงทุน</div>`;
-  wrap.innerHTML=`<div class="text-[11px] font-bold sub uppercase tracking-wide mb-1.5">① แนวโน้มธีมการลงทุน</div><div class="surf brd rounded-xl cs p-4"><div class="flex items-start justify-between gap-3 flex-wrap mb-3"><div><h2 class="text-[16px] font-extrabold">ภาพรวมแนวโน้มธีมการลงทุน</h2><p class="text-[10px] sub mt-0.5">ติดตามทิศทางและผลตอบแทนของธีมเด่น ก่อนเลือกเปรียบเทียบ Master Fund ในมุมมองเดียว</p></div><div class="flex gap-1.5 flex-wrap text-[9px]"><span class="px-2.5 py-1 rounded-full surf2 brd">บวก 1Y <b class="num">${positive}/${stats.length}</b></span><span class="px-2.5 py-1 rounded-full surf2 brd">เร่งขึ้น <b class="num">${accelerating}/${stats.length}</b></span><span class="px-2.5 py-1 rounded-full surf2 brd">เหนือ Global <b class="num">${outperform}/${stats.length}</b></span></div></div><div class="inline-flex surf2 brd rounded-lg p-0.5 mb-3"><button onclick="setThemeView('interesting')" class="px-3 py-1.5 rounded-md text-[10px] font-bold ${state.themeView==='interesting'?'text-white':''}" style="${state.themeView==='interesting'?'background:#2456d8':''}">ธีมที่น่าจับตา</button><button onclick="setThemeView('all')" class="px-3 py-1.5 rounded-md text-[10px] font-bold ${state.themeView==='all'?'text-white':''}" style="${state.themeView==='all'?'background:#2456d8':''}">เลือกธีมเอง</button></div>${picker}<div class="grid sm:grid-cols-2 lg:grid-cols-3 ${state.themeView==='all'?'xl:grid-cols-5':'xl:grid-cols-3'} gap-2.5">${cards}</div>${chosen}${detail}</div>`;
-  buildThemePulseCharts(displayStats);if(selected.length)buildThemeDetailChart(selected);else destroyChart('scope-trend-chart');
+function buildThemePulseCharts(stats){
+  stats.forEach(s=>{
+    const id='theme-spark-'+sid(s.scope.id),el=document.getElementById(id);
+    if(!el)return;
+    destroyChart(id);
+    const ctx=el.getContext('2d');
+    const grad=ctx.createLinearGradient(0,0,0,70);
+    grad.addColorStop(0,s.sparkColor+'35');
+    grad.addColorStop(1,s.sparkColor+'00');
+    charts[id]=new Chart(el,{type:'line',data:{labels:CMP_LABELS,datasets:[{data:s.series,borderColor:s.sparkColor,backgroundColor:grad,borderWidth:2.4,pointRadius:0,pointHoverRadius:3,tension:.34,fill:true}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}});
+  });
+}
+function buildThemeDetailChart(selected){
+  const id='scope-trend-chart',el=document.getElementById(id);
+  if(!el)return;
+  destroyChart(id);
+  const datasets=selected.map((s,i)=>({label:`${i+1}. ${s.scope.title}`,data:s.series,borderColor:COMPARE_COLORS[i],backgroundColor:COMPARE_COLORS[i],borderWidth:2.8,borderDash:COMPARE_DASH[i],pointRadius:0,pointHoverRadius:4,tension:.3,fill:false}));
+  datasets.push({label:'MSCI ACWI · จุดอ้างอิง',data:performanceSeries(731,GLOBAL_RETURN,CMP_LABELS.length),borderColor:'#7b879d',backgroundColor:'#7b879d',borderWidth:2,borderDash:[6,4],pointRadius:0,pointHoverRadius:4,tension:.3,fill:false});
+  charts[id]=new Chart(el,{type:'line',data:{labels:CMP_LABELS,datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,pointStyle:'line',boxWidth:22,font:{size:9}}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${(c.parsed.y-100).toFixed(1)}%`}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:7}},y:{ticks:{font:{size:9},callback:v=>(v-100)+'%'},grid:{color:'rgba(148,163,184,.15)'}}}}});
+}
+function renderThemePulse(wrap){
+  const stats = SCOPES.map(themePulseStats);
+  const accelerating = stats.filter(s => s.accel > 1).length;
+  const outperform = stats.filter(s => s.vsGlobal > 0).length;
+  const positive = stats.filter(s => s.scope.perf > 0).length;
+  const interesting = [...stats].sort((a,b) => b.q1 - a.q1 || b.flow - a.flow).slice(0, 3);
+  
+  // Default selection in interesting mode if empty
+  if(!state.themeSelections.length && state.themeView === 'interesting'){
+    state.themeSelections = interesting.map(s => s.scope.id);
+  }
+  
+  const selected = state.themeSelections.map(id => stats.find(s => s.scope.id === id)).filter(Boolean);
+  const visibleStats = state.themeView === 'all' ? stats : selected;
+
+  const chips = `
+    <div class="theme-selector ${state.themeView === 'all' ? 'mode-custom' : 'mode-interesting'}">
+      <div class="theme-selection-wrapper space-y-2">
+        <div class="theme-chips-container flex items-center gap-2 flex-wrap">
+          ${selected.length ? `<span class="theme-selected-label text-xs font-extrabold text-slate-700 dark:text-slate-300">ธีมที่เลือก ${selected.length}/5:</span>` : ''}
+          <div class="theme-chips flex items-center gap-1.5 flex-wrap">
+            ${(state.themeView === 'all' ? stats : selected).map((s) => {
+              const order = state.themeSelections.indexOf(s.scope.id);
+              const isSel = order > -1;
+              const color = isSel ? COMPARE_COLORS[order % COMPARE_COLORS.length] : '';
+              return `
+                <button
+                  type="button"
+                  class="theme-chip inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition border ${isSel ? '!text-white border-transparent shadow-xs' : 'surf2 sub border-slate-200 dark:border-slate-700 hover:txt'}"
+                  style="${isSel ? `background:${color} !important; color:#ffffff !important;` : ''}"
+                  onclick="toggleThemeChoice('${s.scope.id.replace(/'/g, "\\'")}')"
+                >
+                  ${isSel ? `<i>${order + 1}.</i>` : ''}
+                  <span>${s.scope.title}</span>
+                  ${isSel ? `<span class="opacity-80 hover:opacity-100">✕</span>` : `<span class="opacity-60">+</span>`}
+                </button>
+              `;
+            }).join('')}
+          </div>
+          ${selected.length ? `<button type="button" class="theme-clear-btn text-xs font-bold sub hover:text-red-600 px-2 py-1" onclick="clearThemeChoices()">ล้างทั้งหมด</button>` : ''}
+        </div>
+
+        <div class="theme-benchmark-text text-[11px] sub flex items-center gap-2 flex-wrap">
+          <span class="dashed-line font-bold text-slate-400">------</span>
+          <b class="txt font-bold">จุดอ้างอิง: MSCI ACWI</b>
+          <span>Performance คำนวณจากตะกร้าหุ้นที่พบใน Top Holdings ไม่ใช่ดัชนีหมวดอย่างเป็นทางการ</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const chartGrid = selected.length ? `
+    <div class="theme-chart-grid grid lg:grid-cols-[minmax(0,1.8fr)_minmax(280px,.85fr)] gap-4 mt-2">
+      <div class="theme-chart-panel surf brd rounded-2xl p-4 shadow-xs">
+        <div class="h-[340px] w-full relative">
+          <canvas id="scope-trend-chart" aria-label="กราฟเปรียบเทียบธีมกับ MSCI ACWI"></canvas>
+        </div>
+      </div>
+
+      <aside class="industry-chart-list surf brd rounded-2xl p-4 shadow-xs flex flex-col justify-between">
+        <div>
+          <div class="industry-chart-list-header mb-3 pb-2.5 brdb">
+            <b class="txt font-extrabold text-sm block">ธีมในกราฟ</b>
+            <small class="sub text-[11px]">เลือกจาก ธีมที่น่าจับตา หรือ เมนู Master Fund</small>
+          </div>
+          <div class="industry-chart-list-scroll space-y-3 overflow-y-auto max-h-[290px] pr-1">
+            ${selected.map((s, index) => `
+              <article class="p-3 rounded-xl surf2 brd hover:border-brand-300 transition" style="border-left: 4px solid ${COMPARE_COLORS[index % COMPARE_COLORS.length]};">
+                <div class="flex items-center justify-between gap-1">
+                  <b class="text-xs txt font-bold truncate">— ${index + 1}. ${s.scope.title}</b>
+                  <small class="sub text-[10px] shrink-0">${s.fundCount} กองทุน</small>
+                </div>
+                <div class="grid grid-cols-3 gap-1 text-[10px] sub mt-1.5 pt-1.5 brdt">
+                  <div><span>1Y</span> <strong class="num block font-bold ${s.scope.perf >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${s.scope.perf > 0 ? '+' : ''}${s.scope.perf}%</strong></div>
+                  <div><span>vs Global</span> <strong class="num block font-bold ${s.vsGlobal >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${s.vsGlobal > 0 ? '+' : ''}${s.vsGlobal}%</strong></div>
+                  <div><span>Fund Flow 1M</span> <strong class="num block font-bold txt">${s.flow > 0 ? '+' : ''}฿${money(s.flow)}</strong></div>
+                </div>
+              </article>
+            `).join('')}
+          </div>
+        </div>
+      </aside>
+    </div>
+  ` : `<div class="p-8 text-center surf brd rounded-2xl sub text-xs">คลิกเลือกธีมจากชิปด้านบนเพื่อแสดงกราฟเปรียบเทียบ</div>`;
+
+  wrap.innerHTML = `
+    <section class="theme-analysis space-y-4">
+      <header class="theme-analysis-heading-wrapper flex flex-col md:flex-row md:items-end justify-between gap-3 pb-2 brdb">
+        <div class="theme-analysis-heading">
+          <h2 class="text-xl sm:text-2xl font-black txt tracking-tight">ภาพรวมแนวโน้มธีมการลงทุน</h2>
+          <p class="text-xs sub mt-0.5">ติดตามทิศทางและผลตอบแทนของธีมเด่น ก่อนเลือกเปรียบเทียบ Master Fund ในมุมมองเดียว</p>
+        </div>
+        
+        <div class="theme-summary flex items-center gap-2 flex-wrap">
+          <span class="px-3 py-1 rounded-full surf2 brd text-xs font-bold text-slate-600 dark:text-slate-300">บวก 1Y <b class="num text-brand-600 dark:text-brand-400">${positive}/${stats.length}</b></span>
+          <span class="px-3 py-1 rounded-full surf2 brd text-xs font-bold text-slate-600 dark:text-slate-300">เร่งขึ้น <b class="num text-emerald-600 dark:text-emerald-400">${accelerating}/${stats.length}</b></span>
+          <span class="px-3 py-1 rounded-full surf2 brd text-xs font-bold text-slate-600 dark:text-slate-300">เหนือ Global <b class="num text-purple-600 dark:text-purple-400">${outperform}/${stats.length}</b></span>
+        </div>
+      </header>
+
+      <div class="theme-analysis-instruction flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-850/60 border border-slate-200/80 dark:border-slate-800">
+        <div class="theme-instruction-text text-xs sub flex items-center gap-2">
+          <span>ติดตามทิศทางและผลตอบแทนของธีมเด่น ก่อนเลือกเปรียบเทียบ Master Fund ในมุมมองเดียว ⓘ</span>
+        </div>
+
+        <div class="theme-view-switch-container flex items-center gap-2 shrink-0">
+          <span class="text-xs sub font-bold">มุมมอง:</span>
+          <div class="theme-view-switch inline-flex p-1 rounded-xl bg-slate-200/70 dark:bg-slate-800 border border-slate-300/60 dark:border-slate-700/60 text-xs font-bold">
+            <button type="button" onclick="setThemeView('interesting')" class="px-3.5 py-1.5 rounded-lg transition ${state.themeView === 'interesting' ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-white shadow-xs' : 'sub hover:txt'}">ธีมที่น่าจับตา</button>
+            <button type="button" onclick="setThemeView('all')" class="px-3.5 py-1.5 rounded-lg transition ${state.themeView === 'all' ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-white shadow-xs' : 'sub hover:txt'}">เลือกธีมเอง</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="theme-toolbar flex items-center justify-between gap-3 pt-1">
+        <div class="text-xs font-bold txt">
+          เปรียบเทียบ Performance บนกราฟเดียวกัน ⓘ
+        </div>
+        ${state.themeView === 'all' ? `
+          <label class="theme-search flex items-center gap-2 surf brd rounded-xl px-3 py-1.5 text-xs">
+            <span class="text-slate-400">⌕</span>
+            <input id="theme-search" aria-label="ค้นหาธีมหรือ Master Fund" oninput="filterThemeChips(this.value)" class="bg-transparent outline-none text-xs txt w-48" placeholder="ค้นหาธีม หรือ Master Fund ที่สนใจ">
+          </label>
+        ` : ''}
+      </div>
+
+      ${chips}
+      ${chartGrid}
+    </section>
+  `;
+  if(selected.length) buildThemeDetailChart(selected);
+  else destroyChart('scope-trend-chart');
+}
+function filterThemeChips(value){
+  const q = value.trim().toLowerCase();
+  document.querySelectorAll('.theme-chips button').forEach(el => {
+    el.classList.toggle('hidden', q && !el.textContent.toLowerCase().includes(q));
+  });
 }
 function holdingIcon(title){const map={สุขภาพ:'🩺',การแพทย์:'🩺',เทคโนโลยี:'💻','เทคโนโลยีและสื่อสาร':'📡',สื่อสาร:'📡',การเงิน:'🏦',อุตสาหกรรม:'🏭','นิคมอุตสาหกรรม':'🏭','สินค้าอุปโภคบริโภค':'🛍️',พาณิชย์:'🛒','พลังงานและสาธารณูปโภค':'⚡',อิเล็กทรอนิกส์:'🔌','ขนส่งและท่องเที่ยว':'✈️','หุ้นโลก':'🌐','หุ้นสหรัฐฯ':'🇺🇸','หุ้นจีน':'🇨🇳','หุ้นเวียดนาม':'🇻🇳','หุ้นอินเดีย':'🇮🇳','หุ้นญี่ปุ่น':'🇯🇵','หุ้นยุโรป':'🇪🇺','หุ้นเกาหลี':'🇰🇷','ตลาดเกิดใหม่':'🌍','เทคโนโลยีภาพรวม':'💻','ปัญญาประดิษฐ์และหุ่นยนต์':'🤖','เซมิคอนดักเตอร์':'🔌','นวัตกรรมสุขภาพ':'🧬','พลังงานสะอาดและรถยนต์ไฟฟ้า':'⚡','สินค้าแบรนด์เนมและสินค้าฟุ่มเฟือย':'💎','ความปลอดภัยทางไซเบอร์':'🛡️','โครงสร้างพื้นฐานทั่วโลก':'🏗️','อสังหาริมทรัพย์ทั่วโลก':'🏢','เกษตรและอุตสาหกรรมอาหาร':'🌾','ธุรกิจการเงิน':'🏦','สินค้าอุตสาหกรรม':'🏭','อสังหาริมทรัพย์และก่อสร้าง':'🏗️',ทรัพยากร:'⚡',บริการ:'🧩',จีน:'🇨🇳','สหรัฐฯ':'🇺🇸',ไทย:'🇹🇭',ไต้หวัน:'🇹🇼',เดนมาร์ก:'🇩🇰',ฝรั่งเศส:'🇫🇷'};return map[title]||'◼';}
 function buildStockScopeChart(selected){const id='scope-trend-chart',el=document.getElementById(id);if(!el)return;destroyChart(id);const bench=compareBenchmark(),datasets=selected.map((s,i)=>({label:`${i+1}. ${s.title} · ตะกร้าหุ้นที่กองทุนถือ`,data:trendSeries(s),borderColor:COMPARE_COLORS[i],backgroundColor:COMPARE_COLORS[i],borderWidth:2.7,borderDash:COMPARE_DASH[i],pointRadius:0,pointHoverRadius:4,tension:.3,fill:false}));
@@ -412,42 +685,126 @@ function buildTrendChart(){const id='scope-trend-chart',el=document.getElementBy
   charts[id]=new Chart(el,{type:'line',data:{labels:CMP_LABELS,datasets:sets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},onClick:(ev)=>{const pts=charts[id].getElementsAtEventForMode(ev,'nearest',{intersect:false},true),ds=pts.length&&sets[pts[0].datasetIndex];if(ds&&ds.scopeId)setScope(ds.scopeId);},plugins:{legend:{position:'bottom',onClick:(ev,item)=>{const ds=sets[item.datasetIndex];if(ds&&ds.scopeId)setScope(ds.scopeId);},labels:{usePointStyle:true,pointStyle:'line',boxWidth:20,font:{size:9},padding:10}},tooltip:{callbacks:{title:c=>c[0]?.label||'',label:c=>` ${c.dataset.label}: ${(c.parsed.y-100).toFixed(1)}%`,afterBody:c=>c[0]?.dataset.scopeId?'คลิกกราฟเพื่อกรองข้อมูลด้านล่าง':''}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:0,maxTicksLimit:7}},y:{ticks:{font:{size:9},callback:v=>(v-100)+'%'},grid:{color:'rgba(148,163,184,.15)'}}}}});}
 
 /* ================= SECTION 2: RANKING CARDS ================= */
-function rankCard(title,emoji,rows,pills,desc){return `<div class="surf brd rounded-xl cs overflow-hidden">
-  <div class="px-3 pt-2.5 pb-2 brdb"><div class="text-[12px] font-bold flex items-center gap-1.5"><span class="w-5 h-5 rounded flex items-center justify-center text-white text-[11px]" style="background:${TYPES[state.tab].acc}">${emoji}</span>${title}</div>${desc?`<div class="text-[9px] sub mt-1">${desc}</div>`:''}${pills?`<div class="flex gap-1 mt-1.5 flex-wrap">${pills}</div>`:''}</div>
-  <div class="py-1">${rows}</div></div>`;}
-function rankRows(list,valFn){return list.slice(0,5).map((e,i)=>{const order=state.groups.indexOf(e.id);return `<div class="rkrow flex items-center gap-2 px-3 py-1.5 ${order>-1?'sel':''}" onclick="selectGroup(${e.idx})" title="${order>-1?'คลิกเพื่อนำออกจากกราฟ':'คลิกเพื่อเพิ่มลงกราฟเปรียบเทียบ'}">
-  <span class="num w-4 text-center text-[11px] font-extrabold sub">${['🥇','🥈','🥉'][i]||(i+1)}</span>
-  <span class="flex-1 min-w-0 text-[12px] font-semibold truncate">${e.title}</span>
-  <span class="text-[12px]">${valFn(e)}</span>${order>-1?`<span class="select-order" aria-label="ลำดับที่เลือก ${order+1}">${order+1}</span>`:'<span class="num w-5 h-5 rounded-md brd sub text-[13px] flex items-center justify-center">+</span>'}</div>`;}).join('');}
-function pillSet(kind,opts){return opts.map(([k,l])=>`<button onclick="event.stopPropagation();state.rk['${kind}']='${k}';renderCards()" class="num px-2 py-0.5 rounded-full text-[10px] font-bold ${state.rk[kind]===k?'text-white':'surf2 sub'}" style="${state.rk[kind]===k?`background:${TYPES[state.tab].acc}`:''}">${l}</button>`).join('');}
-function renderCards(){const es=ENTS,pf=state.rk.flow,pr=state.rk.ret;
-  const heading=document.getElementById('rankingHeading');
-  if(isStockTab()){const selectedScopes=state.stockScopeSelections.map(id=>SCOPES.find(s=>s.id===id)).filter(Boolean),scopeText=selectedScopes.length===1?selectedScopes[0].title:selectedScopes.length?`${selectedScopes.length} กลุ่มที่เลือก`:'ขอบเขตทั้งหมด';heading.textContent=`② หุ้น${state.tab==='offshore'?'ต่างประเทศ':'ไทย'}ใน ${scopeText}`;document.getElementById('cards').innerHTML=[
-    rankCard('ถือโดยกองทุนมากที่สุด','🏦',rankRows([...es].sort((a,b)=>b.fundCount-a.fundCount||b.totalWeight-a.totalWeight),e=>`<b class="num">${e.fundCount} กอง</b>`),`<span class="text-[10px] sub">นับจำนวนกองทุนที่พบหุ้นใน Top Holdings</span>`,'ช่วยดูว่าหุ้นใดปรากฏในหลายกองทุน ไม่ใช่คำแนะนำซื้อ'),
-    rankCard('น้ำหนักรวมสูงสุด','⚖️',rankRows([...es].sort((a,b)=>b.totalWeight-a.totalWeight),e=>`<b class="num" style="color:${TYPES[state.tab].acc}">${e.totalWeight.toFixed(1)}%</b>`),`<span class="text-[10px] sub">ผลรวมน้ำหนักจากกองทุนตัวอย่าง</span>`,'ช่วยเห็นหุ้นที่กองทุนไทยให้น้ำหนักรวมสูง'),
-    rankCard('เงินปันผลหุ้นสูงสุด','💸',rankRows([...es].sort((a,b)=>b.div-a.div),e=>`<b class="num text-pos-600 text-[12px]">${e.div.toFixed(1)}%</b>`),`<span class="text-[10px] sub">อัตราผลตอบแทนเงินปันผล %</span>`,'เทียบอัตราปันผลของหุ้นรายตัว ไม่ใช่ของกองทุน')
-  ].join('');return;}
-  heading.textContent=state.tab==='feeder'?(state.themeSelections.length?`② Master Fund ใน ${state.themeSelections.length} ธีมที่เลือก`:'② อันดับ Master Fund จากทุกธีม'):'② อันดับภายในขอบเขตที่เลือก';
-  document.getElementById('cards').innerHTML=[
-    rankCard('เงินไหลเข้าสูงสุด','💰',rankRows([...es].sort((a,b)=>b.flowP[pf]-a.flowP[pf]),e=>flowH(e.flowP[pf])),pillSet('flow',[['w1','1W'],['m1','1M'],['y1','1Y']]),'ดูว่าช่วงนี้เงินลงทุนกำลังไหลไปที่ไหน'),
-    rankCard('ผลตอบแทนสูงสุด','📈',rankRows([...es].sort((a,b)=>b.retP[pr]-a.retP[pr]),e=>pct(e.retP[pr])),pillSet('ret',[['m1','1M'],['q1','3M'],['y1','1Y'],['y3','3Y'],['y5','5Y']]),'ดูรายการที่สร้างผลตอบแทนสูงในช่วงเวลาที่เลือก'),
-    rankCard('จ่ายปันผลสูงสุด','🌿',rankRows([...es].sort((a,b)=>b.div-a.div),e=>`<b class="num text-pos-600 text-[12px]">${e.div.toFixed(1)}%</b>`),`<span class="text-[10px] sub">ย้อนหลัง 12 เดือน</span>`,'ดูรายการที่สร้างกระแสเงินสดจากเงินปันผลสูง')
-  ].join('');}
-function selectGroup(idx){const e=ENTS[idx];if(!e)return;const at=state.groups.indexOf(e.id);
-  if(at>-1)state.groups.splice(at,1);else if(state.groups.length<7)state.groups.push(e.id);else{alert('เลือกเปรียบเทียบได้สูงสุด 7 รายการ');return;}
-  render();}
-function clearGroupSelection(){state.groups=[];render();}
-function scrollInsights(){document.getElementById('insightWrap').scrollIntoView({behavior:'smooth',block:'start'});}
-function renderSelectionBar(){const bar=document.getElementById('selectionBar');
-  if(state.tab==='mixed'){bar.classList.add('hidden');bar.innerHTML='';return;}
-  const selected=state.groups.map(id=>ENTS.find(e=>e.id===id)).filter(Boolean);
+const RANK_MEDAL_COLORS = ['#f0b429', '#94a3b8', '#c2793a'];
+
+function rankCard(title, emoji, rows, pills, desc){
+  return `<article class="ranking-card surf brd rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-brand-300 dark:hover:border-brand-600 transition-all flex flex-col justify-between">
+    <div class="ranking-card-header pb-2.5 mb-2.5 brdb">
+      <div class="ranking-card-title flex items-center justify-between gap-2">
+        <span class="flex items-center gap-2 font-black text-sm txt"><span>${emoji}</span><span>${title}</span></span>
+        ${pills ? `<div class="ranking-periods flex items-center gap-1">${pills}</div>` : ''}
+      </div>
+      ${desc ? `<p class="text-[11px] sub mt-1">${desc}</p>` : ''}
+    </div>
+    <div class="ranking-card-list space-y-1.5">${rows}</div>
+  </article>`;
+}
+
+function rankRows(list, valFn){
+  return list.slice(0, 5).map((e, i) => {
+    const order = state.groups.indexOf(e.id);
+    const medalStyle = i === 0
+      ? 'background:linear-gradient(135deg,#fbbf24,#d97706);color:#fff;'
+      : i === 1
+      ? 'background:linear-gradient(135deg,#cbd5e1,#64748b);color:#fff;'
+      : i === 2
+      ? 'background:linear-gradient(135deg,#fb923c,#c2410c);color:#fff;'
+      : 'background:var(--surf2);color:var(--sub);';
+    return `<button type="button" class="ranking-row ${order > -1 ? 'selected' : ''}" onclick="selectGroup(${e.idx})" title="${order > -1 ? 'คลิกเพื่อนำออก' : 'คลิกเพื่อเพิ่มลงกราฟเปรียบเทียบ'}">
+      <span class="ranking-number ${i < 3 ? 'medal shadow-2xs' : ''}" style="${medalStyle}">${i + 1}</span>
+      <span class="ranking-row-name" title="${e.title}">${e.title}</span>
+      <strong class="num">${valFn(e)}</strong>
+      ${order > -1 ? `<span class="select-order" style="background:${TYPES[state.tab].acc};color:#fff;">${order + 1}</span>` : '<span class="ranking-add">+</span>'}
+    </button>`;
+  }).join('');
+}
+
+function pillSet(kind, opts){
+  return opts.map(([k, l]) => `<button type="button" onclick="event.stopPropagation();state.rk['${kind}']='${k}';renderCards()" class="px-2 py-0.5 text-[10px] font-bold rounded-md transition ${state.rk[kind] === k ? '!text-white shadow-2xs' : 'sub hover:txt'}" style="${state.rk[kind] === k ? `background:${TYPES[state.tab].acc} !important; color:#ffffff !important;` : 'background:var(--surf2)'}">${l}</button>`).join('');
+}
+
+function renderCards(){
+  const es = ENTS, pf = state.rk.flow, pr = state.rk.ret;
+  const heading = document.getElementById('rankingHeading');
+  
+  if(isStockTab()){
+    const selectedScopes = state.stockScopeSelections.map(id => SCOPES.find(s => s.id === id)).filter(Boolean);
+    const scopeText = selectedScopes.length === 1 ? selectedScopes[0].title : selectedScopes.length ? `${selectedScopes.length} กลุ่มที่เลือก` : 'ขอบเขตทั้งหมด';
+    const itemLabel = state.tab === 'thai' ? 'หุ้นไทย' : 'หุ้นต่างประเทศ';
+    heading.innerHTML = `
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-3 pb-2 brdb">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200/80 dark:border-brand-800/60">② RANKING</span>
+            <span class="text-xs sub font-bold">${itemLabel}</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-black txt tracking-tight">อันดับ${itemLabel}ใน ${scopeText}</h2>
+          <p class="text-xs sub mt-0.5">เลือกหุ้นเพื่อเปรียบเทียบผลตอบแทนแบบกราฟเดียวกัน จาก Ranking card</p>
+        </div>
+      </div>
+    `;
+    document.getElementById('cards').innerHTML = [
+      rankCard('ถือโดยกองทุนมากที่สุด', '🏦', rankRows([...es].sort((a,b)=>b.fundCount-a.fundCount||b.totalWeight-a.totalWeight), e => `${e.fundCount} กอง`), `<span class="text-[10px] sub">นับจำนวนกองทุนที่พบหุ้นใน Top Holdings</span>`, 'ช่วยดูว่าหุ้นใดปรากฏในหลายกองทุน ไม่ใช่คำแนะนำซื้อ'),
+      rankCard('น้ำหนักรวมสูงสุด', '⚖️', rankRows([...es].sort((a,b)=>b.totalWeight-a.totalWeight), e => `<span style="color:${TYPES[state.tab].acc}">${e.totalWeight.toFixed(1)}%</span>`), `<span class="text-[10px] sub">ผลรวมน้ำหนักจากกองทุนตัวอย่าง</span>`, 'ช่วยเห็นหุ้นที่กองทุนไทยให้น้ำหนักรวมสูง'),
+      rankCard('เงินปันผลหุ้นสูงสุด', '💸', rankRows([...es].sort((a,b)=>b.div-a.div), e => `<span class="text-pos">${e.div.toFixed(1)}%</span>`), `<span class="text-[10px] sub">อัตราผลตอบแทนเงินปันผล %</span>`, 'เทียบอัตราปันผลของหุ้นรายตัว ไม่ใช่ของกองทุน')
+    ].join('');
+    return;
+  }
+  
+  const titleText = state.tab === 'feeder' ? (state.themeSelections.length ? `Master Fund ใน ${state.themeSelections.length} ธีมที่เลือก` : 'อันดับ Master Fund จากทุกธีม') : 'อันดับกองทุนผสม';
+  heading.innerHTML = `
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-3 pb-2 brdb">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200/80 dark:border-brand-800/60">② RANKING</span>
+          <span class="text-xs sub font-bold">${TYPES[state.tab].label}</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-black txt tracking-tight">${titleText}</h2>
+        <p class="text-xs sub mt-0.5">เลือกกองทุนเพื่อเปรียบเทียบผลตอบแทนบนกราฟ จาก Ranking card</p>
+      </div>
+    </div>
+  `;
+  document.getElementById('cards').innerHTML = [
+    rankCard('เงินไหลเข้าสูงสุด', '💰', rankRows([...es].sort((a,b)=>b.flowP[pf]-a.flowP[pf]), e => flowH(e.flowP[pf])), pillSet('flow', [['w1','1W'],['m1','1M'],['y1','1Y']]), 'ดูว่าช่วงนี้เงินลงทุนกำลังไหลไปที่ไหน'),
+    rankCard('ผลตอบแทนสูงสุด', '📈', rankRows([...es].sort((a,b)=>b.retP[pr]-a.retP[pr]), e => pct(e.retP[pr])), pillSet('ret', [['m1','1M'],['q1','3M'],['y1','1Y'],['y3','3Y'],['y5','5Y']]), 'ดูรายการที่สร้างผลตอบแทนสูงในช่วงเวลาที่เลือก'),
+    rankCard('จ่ายปันผลสูงสุด', '🌿', rankRows([...es].sort((a,b)=>b.div-a.div), e => `<span class="text-pos">${e.div.toFixed(1)}%</span>`), `<span class="text-[10px] sub">ย้อนหลัง 12 เดือน</span>`, 'ดูรายการที่สร้างกระแสเงินสดจากเงินปันผลสูง')
+  ].join('');
+}
+
+function selectGroup(idx){
+  const e = ENTS[idx];
+  if(!e) return;
+  const at = state.groups.indexOf(e.id);
+  if(at > -1) state.groups.splice(at, 1);
+  else if(state.groups.length < 7) state.groups.push(e.id);
+  else { alert('เลือกเปรียบเทียบได้สูงสุด 7 รายการ'); return; }
+  render();
+}
+function clearGroupSelection(){ state.groups = []; render(); }
+function scrollInsights(){ document.getElementById('insightWrap').scrollIntoView({behavior:'smooth', block:'start'}); }
+
+function renderSelectionBar(){
+  const bar = document.getElementById('selectionBar');
+  if(!bar) return;
+  if(state.tab === 'mixed'){ bar.classList.add('hidden'); bar.innerHTML = ''; return; }
+  const selected = state.groups.map(id => ENTS.find(e => e.id === id)).filter(Boolean);
   bar.classList.remove('hidden');
-  bar.innerHTML=`<div class="surf brd rounded-xl px-3 py-2 flex items-center gap-2 flex-wrap text-[11px]">
-    <span class="font-bold">เลือกเพื่อเปรียบเทียบ <b class="num" style="color:${TYPES[state.tab].acc}">${selected.length}/7</b></span>
-    <span class="sub">คลิกได้หลาย${isStockTab()?'หุ้น':'รายการ'}จาก Ranking Card และลำดับจะเรียงตามที่กด</span>
-    ${selected.length?`<button onclick="clearGroupSelection()" class="font-semibold px-2 py-1 rounded-lg surf2 brd">ล้างทั้งหมด</button>`:''}
-    <button onclick="scrollInsights()" class="ml-auto px-3 py-1.5 rounded-lg text-white font-bold" style="background:${TYPES[state.tab].acc}">ดูกราฟเปรียบเทียบ ↓</button>
-  </div>`;}
+  bar.innerHTML = `
+    <div class="ranking-summary flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-brand-50/40 dark:bg-brand-950/40 border border-brand-200/80 dark:border-brand-800/60 mt-4 shadow-xs">
+      <div class="ranking-summary-left flex items-center gap-3 flex-wrap">
+        <span class="text-xs font-bold txt">เลือกเพื่อเปรียบเทียบ: <strong class="num text-sm font-extrabold text-brand-600 dark:text-brand-400">${selected.length}/7</strong></span>
+        <span class="ranking-summary-note text-[11px] sub">จาก Ranking Card และลำดับจะเรียงตามที่เลือก</span>
+        ${selected.length ? `<button type="button" onclick="clearGroupSelection()" class="text-xs font-bold text-slate-500 hover:text-red-600 underline">ล้างทั้งหมด</button>` : ''}
+      </div>
+      ${selected.length ? `
+        <button type="button" onclick="scrollInsights()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-xs shadow-xs transition hover:brightness-110 cursor-pointer" style="background:${TYPES[state.tab].acc} !important; color:#ffffff !important;">
+          <span>ดูกราฟเปรียบเทียบ</span>
+          <span>↓</span>
+        </button>
+      ` : ''}
+    </div>
+  `;
+}
 
 /* ================= SECTION 2: ADVANCED FILTER ================= */
 function hasSec(f,kw){return (f.sectors||[]).some(s=>s[0].includes(kw));}
@@ -470,12 +827,64 @@ function setQuick(k,v){state.quick[k]=v;state.open=new Set();render();}
 function setMetric(k,v){state.metric[k]=v;state.open=new Set();render();}
 function toggleMetricFilter(k){state.metricOpen.has(k)?state.metricOpen.delete(k):state.metricOpen.add(k);renderQuickFilters();}
 function resetFundFilters(){state.quick={wrapper:'',amc:'',dividend:'',minInvest:''};state.metric={};state.metricOpen=new Set();state.filt={};state.open=new Set();render();}
-function renderQuickFilters(){const el=document.getElementById('quickFilters'),amcs=[...new Set(baseFunds().map(f=>f.amc))].sort();
+function renderQuickFilters(){
+  const el=document.getElementById('quickFilters'),amcs=[...new Set(baseFunds().map(f=>f.amc))].sort();
   const opt=(v,l,sel)=>`<option value="${v}" ${sel===v?'selected':''}>${l}</option>`;
-  const metric=(k,label,field,options)=>`<div class="flex items-center gap-1.5"><button onclick="toggleMetricFilter('${k}')" class="fpill ${state.metricOpen.has(k)||state.metric[field]!==undefined?'on':''}" style="${state.metricOpen.has(k)||state.metric[field]!==undefined?`background:${TYPES[state.tab].acc}`:''}">＋ ${label}</button>${state.metricOpen.has(k)?`<select onchange="setMetric('${field}',this.value)" class="filter-select w-auto">${options.map(o=>opt(o[0],o[1],String(state.metric[field]??''))).join('')}</select>`:''}</div>`;
-  const taxOpts=WRAPPER_TYPES.map(v=>opt(v,v==='ทั่วไป'?'กองทั่วไป (ไม่ใช้สิทธิลดหย่อน)':v==='LTF'?'LTF (กองเดิม)':v,state.quick.wrapper)).join('');
-  const context=isStockTab()?`กรองเฉพาะกองทุนไทยที่ถือหุ้น${state.groups.length?'ที่เลือก':'ในขอบเขตด้านบน'} — ตัวเลขผลตอบแทนส่วนนี้เป็นของกองทุน`:'โครงสร้าง Feeder Fund แสดงอยู่ในแท็บแล้ว ตัวกรองนี้ใช้แยกสิทธิภาษีและเงื่อนไขการลงทุน';
-  el.innerHTML=`<div class="surf brd rounded-xl cs p-3"><div class="mb-2"><b class="text-[11px]">คัดกรองกองทุนที่ซื้อได้</b><span class="text-[9px] sub ml-2">${context}</span></div><div class="grid sm:grid-cols-2 lg:grid-cols-[1.15fr_1.4fr_1fr_1fr_auto] gap-2 items-end"><label class="text-[10px] font-bold sub">สิทธิประโยชน์ภาษี<select onchange="setQuick('wrapper',this.value)" class="filter-select mt-1">${opt('','ทั้งหมด',state.quick.wrapper)}${taxOpts}</select></label><label class="text-[10px] font-bold sub">บริษัทจัดการ (บลจ.)<select onchange="setQuick('amc',this.value)" class="filter-select mt-1">${opt('','บลจ. ทั้งหมด',state.quick.amc)}${amcs.map(v=>opt(v,v,state.quick.amc)).join('')}</select></label><label class="text-[10px] font-bold sub">นโยบายปันผล<select onchange="setQuick('dividend',this.value)" class="filter-select mt-1">${opt('','ทั้งหมด',state.quick.dividend)}${opt('yes','จ่ายปันผล',state.quick.dividend)}${opt('no','ไม่จ่ายปันผล',state.quick.dividend)}</select></label><label class="text-[10px] font-bold sub">เงินลงทุนขั้นต่ำ<select onchange="setQuick('minInvest',this.value)" class="filter-select mt-1">${opt('','ไม่จำกัด',state.quick.minInvest)}${opt('500','ไม่เกิน 500 บาท',state.quick.minInvest)}${opt('1000','ไม่เกิน 1,000 บาท',state.quick.minInvest)}${opt('5000','ไม่เกิน 5,000 บาท',state.quick.minInvest)}</select></label><button onclick="resetFundFilters()" class="px-3 py-2 rounded-lg surf2 brd text-[11px] font-bold">รีเซ็ต</button></div><div class="flex items-center gap-2 flex-wrap mt-3 pt-3 brdt"><span class="text-[10px] font-bold sub">เพิ่มตัวกรองเมื่อจำเป็น:</span>${metric('ret','ผลตอบแทนกองทุน','retMin',[['','ทั้งหมด'],['0','อย่างน้อย 0%'],['5','อย่างน้อย 5%'],['10','อย่างน้อย 10%'],['20','อย่างน้อย 20%']])}${metric('sd','SD','sdMax',[['','ทั้งหมด'],['10','ไม่เกิน 10%'],['15','ไม่เกิน 15%'],['20','ไม่เกิน 20%']])}${metric('sharpe','Sharpe Ratio','sharpeMin',[['','ทั้งหมด'],['0.5','อย่างน้อย 0.5'],['1','อย่างน้อย 1.0']])}${metric('dd','Max Drawdown','ddMin',[['','ทั้งหมด'],['-10','ไม่ต่ำกว่า -10%'],['-20','ไม่ต่ำกว่า -20%'],['-30','ไม่ต่ำกว่า -30%']])}</div></div>`;
+  const metric=(k,label,field,options)=>`
+    <div class="flex items-center gap-1.5">
+      <button type="button" onclick="toggleMetricFilter('${k}')" class="fpill px-3 py-1 rounded-full text-xs font-bold transition border ${state.metricOpen.has(k)||state.metric[field]!==undefined?'text-white border-transparent bg-brand-600 shadow-2xs':'surf2 sub border-slate-200 dark:border-slate-700 hover:txt'}">＋ ${label}</button>
+      ${state.metricOpen.has(k)?`<select onchange="setMetric('${field}',this.value)" class="filter-select w-auto text-xs rounded-lg p-1 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 txt">${options.map(o=>opt(o[0],o[1],String(state.metric[field]??''))).join('')}</select>`:''}
+    </div>
+  `;
+  const taxOpts=WRAPPER_TYPES.map(v=>opt(v,v==='ทั่วไป'?'ทั่วไป':v==='LTF'?'LTF (กองเดิม)':v,state.quick.wrapper)).join('');
+  el.innerHTML=`
+    <div class="quick-filter-card surf brd rounded-2xl p-4 space-y-3 shadow-xs">
+      <div class="flex items-center justify-between gap-2 flex-wrap pb-2 brdb">
+        <b class="text-xs sm:text-sm font-extrabold txt">คัดกรองกองทุนที่ซื้อได้ ⓘ</b>
+        <button type="button" onclick="resetFundFilters()" class="text-xs font-bold sub hover:text-red-600 transition">รีเซ็ต</button>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <label class="text-[11px] font-bold sub block">
+          สิทธิประโยชน์ภาษี
+          <select onchange="setQuick('wrapper',this.value)" class="filter-select mt-1 w-full bg-slate-50 dark:bg-slate-850 rounded-xl p-2.5 border border-slate-200 dark:border-slate-700 text-xs txt outline-none">
+            ${opt('','สิทธิประโยชน์ภาษี',state.quick.wrapper)}
+            ${taxOpts}
+          </select>
+        </label>
+        <label class="text-[11px] font-bold sub block">
+          บริษัทจัดการ (บลจ.)
+          <select onchange="setQuick('amc',this.value)" class="filter-select mt-1 w-full bg-slate-50 dark:bg-slate-850 rounded-xl p-2.5 border border-slate-200 dark:border-slate-700 text-xs txt outline-none">
+            ${opt('','บริษัทจัดการ (บลจ.)',state.quick.amc)}
+            ${amcs.map(v=>opt(v,v,state.quick.amc)).join('')}
+          </select>
+        </label>
+        <label class="text-[11px] font-bold sub block">
+          นโยบายปันผล
+          <select onchange="setQuick('dividend',this.value)" class="filter-select mt-1 w-full bg-slate-50 dark:bg-slate-850 rounded-xl p-2.5 border border-slate-200 dark:border-slate-700 text-xs txt outline-none">
+            ${opt('','นโยบายปันผล',state.quick.dividend)}
+            ${opt('yes','จ่ายปันผล',state.quick.dividend)}
+            ${opt('no','ไม่จ่ายปันผล',state.quick.dividend)}
+          </select>
+        </label>
+        <label class="text-[11px] font-bold sub block">
+          เงินลงทุนขั้นต่ำ
+          <select onchange="setQuick('minInvest',this.value)" class="filter-select mt-1 w-full bg-slate-50 dark:bg-slate-850 rounded-xl p-2.5 border border-slate-200 dark:border-slate-700 text-xs txt outline-none">
+            ${opt('','เงินลงทุนขั้นต่ำ',state.quick.minInvest)}
+            ${opt('1','≤ 1 บาท',state.quick.minInvest)}
+            ${opt('500','≤ 500 บาท',state.quick.minInvest)}
+            ${opt('1000','≤ 1,000 บาท',state.quick.minInvest)}
+          </select>
+        </label>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap pt-2 brdt">
+        <span class="text-[11px] font-bold sub">เพิ่มตัวกรองเมื่อจำเป็น:</span>
+        ${metric('ret','ผลตอบแทนกองทุน','retMin',[['','ทั้งหมด'],['0','อย่างน้อย 0%'],['5','อย่างน้อย 5%'],['10','อย่างน้อย 10%'],['20','อย่างน้อย 20%']])}
+        ${metric('sd','SD','sdMax',[['','ทั้งหมด'],['10','ไม่เกิน 10%'],['15','ไม่เกิน 15%'],['20','ไม่เกิน 20%']])}
+        ${metric('sharpe','Sharpe Ratio','sharpeMin',[['','ทั้งหมด'],['0.5','อย่างน้อย 0.5'],['1','อย่างน้อย 1.0']])}
+        ${metric('dd','Max Drawdown','ddMin',[['','ทั้งหมด'],['-10','ไม่ต่ำกว่า -10%'],['-20','ไม่ต่ำกว่า -20%'],['-30','ไม่ต่ำกว่า -30%']])}
+      </div>
+    </div>
+  `;
 }
 function updateAdvBtn(){const acc=TYPES[state.tab].acc,cfg=filterCfg();const nSel=cfg?cfg.reduce((n,g)=>n+((state.filt[g.id]&&state.filt[g.id].size)||0),0):0;
   const btn=document.getElementById('advBtn'),bN=document.getElementById('advN');
@@ -504,7 +913,7 @@ function insightFor(ent){
   return{theme:ent.title,narr:'ธีมการลงทุนที่รวมกองทุนซึ่งมีนโยบายและพอร์ตใกล้เคียงกัน ให้ภาพรวมทิศทางและหุ้น/สินทรัพย์ที่ถืออยู่',pe:null,pb:null,flow:ent.flowP.y1,bench:'Benchmark',
     master:{name:ent.members[0].master||ent.title,amc:ent.members[0].amc,aum:'—',incep:'—',te:2.5,pm:'—'},top};
 }
-const COMPARE_COLORS=['#2456d8','#0e9f6e','#e0a411','#7a5af5','#e2557a','#0891b2','#f04438'];
+const COMPARE_COLORS=['#2456d8','#0e9f6e','#d97706','#7a5af5','#0891b2','#0284c7','#b45309'];
 const COMPARE_DASH=[[],[8,3],[3,2],[10,3,2,3],[6,2],[2,2],[12,3]];
 const GLOBAL_RETURN=12.8;
 const CMP_LABELS=['ก.ค. 68','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.','ม.ค. 69','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค. 69'];
@@ -517,51 +926,255 @@ function keyCharacteristics(I){const n=(I.theme+' '+I.master.name).toLowerCase()
   return '';
 }
 function compareBenchmark(){return state.tab==='thai'?{name:'SET TRI',ret:3.2,short:'SET'}:{name:'MSCI ACWI',ret:GLOBAL_RETURN,short:'Global'};}
-function renderStockInsight(wrap,selected){const foreign=state.tab==='offshore',bench=compareBenchmark(),itemLabel=foreign?'หุ้นต่างประเทศ':'หุ้นไทย';
-  const cards=selected.map((ent,i)=>{const gap=+(ent.perf-bench.ret).toFixed(1),m=ent.meta,color=COMPARE_COLORS[i];return `<div class="compare-card" style="border-left:4px solid ${color}"><div class="flex items-start gap-2 mb-2"><span class="select-order" style="background:${color}">${i+1}</span><div class="min-w-0 flex-1"><div class="text-[11px] font-extrabold truncate">${ent.ticker} · ${ent.name}</div><div class="text-[9px] sub truncate">${ent.sector} · ${ent.country}</div></div><button onclick="selectGroup(${ent.idx})" class="sub text-[13px] leading-none" aria-label="นำ ${ent.ticker} ออกจากการเปรียบเทียบ">✕</button></div><div class="grid grid-cols-3 gap-1.5 mb-2"><div class="metric-cell"><div class="text-[8px] sub">1Y Return</div><div class="text-[12px]">${pct(ent.perf)}</div><div class="metric-help">ผลตอบแทนหุ้นย้อนหลัง 1 ปี</div></div><div class="metric-cell"><div class="text-[8px] sub">Max Drawdown</div><div class="num text-[11px] font-bold text-neg-600">${m.dd}%</div><div class="metric-help">ลงหนักสุดจากจุดสูงสุด</div></div><div class="metric-cell"><div class="text-[8px] sub">vs ${bench.short}</div><div class="num text-[11px] font-bold ${gap>=0?'text-pos-600':'text-neg-600'}">${gap>0?'+':''}${gap}%</div><div class="metric-help">เทียบ ${bench.name}</div></div></div><div class="surf2 rounded-lg px-2 py-1.5 mb-2"><div class="text-[8px] sub font-bold">VALUATION</div><div class="num text-[10px] font-bold">P/E ${m.pe}x · P/B ${m.pb}x · Dividend ${m.div}%</div><div class="text-[8px] sub">ใช้เปรียบเทียบหุ้นใน Sector เดียวกัน ไม่ใช้ตัดสินจากตัวเลขเดียว</div></div><div class="text-[9px] sub flex gap-x-2 gap-y-0.5 flex-wrap"><span>Market Cap <b class="num" style="color:var(--txt)">${m.cap}</b></span><span>พบใน <b class="num" style="color:var(--txt)">${ent.fundCount}</b> กอง</span><span class="w-full">น้ำหนักรวมใน Top Holdings <b class="num" style="color:var(--txt)">${ent.totalWeight}%</b></span></div></div>`;}).join('');
-  wrap.innerHTML=`<div class="text-[11px] font-bold sub uppercase tracking-wide mb-1.5">③ Stock Comparison · เปรียบเทียบ${itemLabel}</div><div class="surf brd rounded-xl cs p-4"><div class="flex items-start justify-between gap-3 flex-wrap mb-3"><div><h2 class="text-[17px] font-extrabold">เปรียบเทียบผลตอบแทน${itemLabel}บนกราฟเดียวกัน</h2><p class="text-[10px] sub mt-0.5">ผลตอบแทนราคาแบบฐาน 100 · 12 เดือน · กองทุนที่ถือหุ้นเหล่านี้จะแสดงต่อในตารางด้านล่าง</p></div><span class="num text-[10px] font-bold px-2.5 py-1 rounded-full surf2 brd">เลือกแล้ว ${selected.length}/7</span></div><div class="grid lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,.85fr)] gap-4"><div class="min-w-0"><div class="chart-note rounded-lg px-3 py-2 mb-2 flex items-center gap-2 flex-wrap"><span class="w-6 border-t-2 border-dashed" style="border-color:#7b879d"></span><b class="text-[10px]">จุดอ้างอิง: ${bench.name}</b><span class="text-[9px] sub">ใช้เป็นเส้นกลางเพื่ออ่านทิศทาง ไม่ใช่ benchmark ทางการของหุ้นทุกตัว</span></div><div class="h-[360px] surf2 brd rounded-xl p-2"><canvas id="master-compare-chart" aria-label="กราฟเปรียบเทียบ${itemLabel}กับ ${bench.name}"></canvas></div>${selected.length===1?`<div class="text-[10px] sub mt-2 text-center">เลือกหุ้นเพิ่มจาก Ranking Card เพื่อเปรียบเทียบหลายตัว</div>`:''}</div><aside><div class="flex items-center justify-between mb-2"><b class="text-[12px]">หุ้นที่กำลังเปรียบเทียบ</b><span class="text-[9px] sub">เรียงตามลำดับที่กด</span></div><div class="max-h-[390px] overflow-y-auto pr-1 flex flex-col gap-2">${cards}</div></aside></div></div>`;
-  buildMasterCompareChart(selected);
-}
-function renderInsight(){const wrap=document.getElementById('insightWrap');
-  if(state.tab==='mixed'){wrap.innerHTML='';return;}
-  const selected=state.groups.map(id=>ENTS.find(e=>e.id===id)).filter(Boolean);
-  if(isStockTab()){if(!selected.length){wrap.innerHTML=`<div class="surf brd rounded-xl p-5 text-center text-[12px] sub"><b>③ ยังไม่ได้เลือกหุ้น${state.tab==='offshore'?'ต่างประเทศ':'ไทย'}</b><br>คลิก + จาก Ranking Card เพื่อสร้างกราฟเปรียบเทียบหุ้น และค้นหากองทุนที่ถือหุ้นนั้น</div>`;return;}renderStockInsight(wrap,selected);return;}
-  if(!selected.length){wrap.innerHTML=`<div class="surf brd rounded-xl p-5 text-center text-[12px] sub"><b>③ ยังไม่ได้เลือก ${state.tab==='feeder'?'Master Fund':'ธีม'}</b><br>คลิก + จาก Ranking Card ด้านบนเพื่อสร้างกราฟเปรียบเทียบ</div>`;return;}
-  const itemLabel=state.tab==='feeder'?'Master Fund':'ธีมลงทุน';
-  const cards=selected.map((ent,i)=>{const I=insightFor(ent),dd=avgMaxDrawdown(ent),gap=+(ent.perf-GLOBAL_RETURN).toFixed(1),color=COMPARE_COLORS[i],exposure=I.top.slice(0,3).map(h=>`${h[0]} ${h[2]}%`).join(' · ');return `<div class="compare-card" style="border-left:4px solid ${color}">
-    <div class="flex items-start gap-2 mb-2"><span class="select-order" style="background:${color}">${i+1}</span><div class="min-w-0 flex-1"><div class="text-[11px] font-extrabold truncate" title="${I.master.name}">${I.master.name}</div><div class="text-[9px] sub truncate" title="${I.theme}">${I.theme}</div></div><button onclick="selectGroup(${ent.idx})" class="sub text-[13px] leading-none" aria-label="นำ ${I.master.name} ออกจากการเปรียบเทียบ">✕</button></div>
-    <div class="grid grid-cols-3 gap-1.5 mb-2">
-      <div class="metric-cell"><div class="text-[8px] sub">1Y Return</div><div class="text-[12px]">${pct(ent.perf)}</div><div class="metric-help">ย้อนหลัง 1 ปี</div></div>
-      <div class="metric-cell"><div class="text-[8px] sub">Max Drawdown</div><div class="num text-[11px] font-bold text-neg-600">${dd}%</div><div class="metric-help">ลงหนักสุดจากจุดสูงสุด</div></div>
-      <div class="metric-cell"><div class="text-[8px] sub">vs Global</div><div class="num text-[11px] font-bold ${gap>=0?'text-pos-600':'text-neg-600'}">${gap>0?'+':''}${gap}%</div><div class="metric-help">เทียบตลาดหุ้นโลก</div></div>
-    </div>
-    ${keyCharacteristics(I)}
-    <div class="text-[8px] sub truncate mb-1.5" title="${exposure}">Top Exposure: ${exposure}</div>
-    <div class="text-[9px] sub flex gap-x-2 gap-y-0.5 flex-wrap"><span>AUM <b class="num" style="color:var(--txt)">${I.master.aum}</b></span><span>พบกองไทย <b class="num" style="color:var(--txt)">${ent.members.length}</b> กอง</span><span class="truncate w-full" title="${I.bench}">ดัชนีประจำกอง: ${I.bench}</span></div>
-  </div>`;}).join('');
-  wrap.innerHTML=`<div class="text-[11px] font-bold sub uppercase tracking-wide mb-1.5">③ เปรียบเทียบธีมและ ${TYPES[state.tab].rightTitle}</div>
-  <div class="surf brd rounded-xl cs p-4">
-    <div class="flex items-start justify-between gap-3 flex-wrap mb-3"><div><h2 class="text-[17px] font-extrabold">เปรียบเทียบผลตอบแทน ${itemLabel} บนกราฟเดียวกัน</h2><p class="text-[10px] sub mt-0.5">ผลตอบแทนสะสมแบบฐาน 100 · 12 เดือน · เรียงเส้นและการ์ดตามลำดับที่เลือก</p></div><span class="num text-[10px] font-bold px-2.5 py-1 rounded-full surf2 brd">เลือกแล้ว ${selected.length}/7</span></div>
-    <div class="grid lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,.85fr)] gap-4">
-      <div class="min-w-0">
-        <div class="chart-note rounded-lg px-3 py-2 mb-2 flex items-center gap-2 flex-wrap"><span class="w-6 border-t-2 border-dashed" style="border-color:#7b879d"></span><b class="text-[10px]">Global Benchmark: MSCI ACWI</b><span class="text-[9px] sub">ใช้เป็นจุดอ้างอิงเดียวกันเพื่อให้เห็นความต่างระหว่างธีม ไม่ใช่ดัชนีทางการของแต่ละกอง</span></div>
-        <div class="h-[360px] surf2 brd rounded-xl p-2"><canvas id="master-compare-chart" aria-label="กราฟเปรียบเทียบผลตอบแทนสะสมของรายการที่เลือกกับ MSCI ACWI"></canvas></div>
-        ${selected.length===1?`<div class="text-[10px] sub mt-2 text-center">เลือกเพิ่มอีกอย่างน้อย 1 รายการจาก Ranking Card เพื่อเห็นความต่างระหว่างธีม</div>`:''}
+function renderStockInsight(wrap,selected){
+  const foreign=state.tab==='offshore',bench=compareBenchmark(),itemLabel=foreign?'หุ้นต่างประเทศ':'หุ้นไทย';
+  wrap.innerHTML=`
+    <section class="comparison-workspace">
+      <div class="comparison-heading flex items-center justify-between gap-3 mb-3">
+        <div>
+          <h2 class="text-base sm:text-lg font-extrabold txt">เปรียบเทียบผลตอบแทน${itemLabel}บนกราฟเดียวกัน ⓘ</h2>
+        </div>
+        <div class="comparison-actions flex items-center gap-2">
+          <span class="text-xs sub">เลือกแล้ว ${selected.length}/7</span>
+          ${selected.length?`<button type="button" onclick="clearGroupSelection()" class="text-xs font-bold sub hover:text-red-600 px-2 py-1">ล้างทั้งหมด</button>`:''}
+        </div>
       </div>
-      <aside><div class="flex items-center justify-between mb-2"><b class="text-[12px]">รายการที่กำลังเปรียบเทียบ</b><span class="text-[9px] sub">เรียงตามลำดับที่กด</span></div><div class="max-h-[390px] overflow-y-auto pr-1 flex flex-col gap-2">${cards}</div></aside>
-    </div>
-  </div>`;
+
+      <article class="comparison-panel">
+        <div class="comparison-panel-body">
+          <div class="industry-benchmark text-[11px] sub flex items-center gap-2 flex-wrap mb-3">
+            <span class="dashed-line font-bold text-slate-400">------</span>
+            <b class="txt font-bold">จุดอ้างอิง: ${bench.name}</b>
+            <span>ใช้เป็นเส้นกลางเพื่ออ่านทิศทาง ไม่ใช่ benchmark ทางการของ${itemLabel}ทุกตัว</span>
+          </div>
+
+          <div class="comparison-chart-full h-[340px] w-full surf brd rounded-2xl p-4 shadow-xs mb-5">
+            <canvas id="master-compare-chart" aria-label="กราฟเปรียบเทียบ${itemLabel}กับ ${bench.name}"></canvas>
+          </div>
+
+          <div class="compare-table-heading mb-3 flex items-center justify-between">
+            <h3 class="text-sm font-bold txt">${itemLabel}ที่กำลังเปรียบเทียบ</h3>
+          </div>
+
+          <div class="compare-table-wrap overflow-x-auto surf brd rounded-2xl shadow-xs">
+            <table class="compare-fund-table w-full text-xs border-collapse">
+              <thead>
+                <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider brdb">
+                  <th class="p-3 text-left w-[240px]">หุ้น</th>
+                  <th class="p-3 text-right">ผลตอบแทนสะสม</th>
+                  <th class="p-3 text-right">Market Cap ⓘ</th>
+                  <th class="p-3 text-right">Max Drawdown</th>
+                  <th class="p-3 text-right">P/E Ratio ⓘ</th>
+                  <th class="p-3 text-right">P/B Ratio ⓘ</th>
+                  <th class="p-3 text-right">เทียบจุดอ้างอิง ⓘ</th>
+                  <th class="p-3 text-left">Sector</th>
+                  <th class="p-3 text-left">Top exposure</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                ${selected.map((ent, i) => {
+                  const m = ent.meta;
+                  const gap = +(ent.perf - bench.ret).toFixed(1);
+                  const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
+                  return `
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                      <td class="p-3">
+                        <div class="flex items-center gap-2.5">
+                          <span class="w-7 h-7 rounded-lg text-white font-black text-[11px] flex items-center justify-center shrink-0 shadow-2xs" style="background:${color}">
+                            ${(ent.ticker || ent.name || 'ST').slice(0, 2).toUpperCase()}
+                          </span>
+                          <div class="min-w-0">
+                            <strong class="block truncate font-extrabold txt text-xs" title="${ent.name}">${ent.ticker} · ${ent.name}</strong>
+                            <small class="block sub text-[10px] truncate">${ent.sector} · ${ent.country}</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="p-3 text-right font-extrabold num text-xs ${ent.perf >= 0 ? 'text-green-600' : 'text-red-600'}">${pct(ent.perf)}</td>
+                      <td class="p-3 text-right num text-xs font-semibold txt">${m.cap}</td>
+                      <td class="p-3 text-right num text-xs font-semibold text-red-600">${m.dd}%</td>
+                      <td class="p-3 text-right num text-xs font-semibold txt">${m.pe}x</td>
+                      <td class="p-3 text-right num text-xs font-semibold txt">${m.pb}x</td>
+                      <td class="p-3 text-right num text-xs font-extrabold ${gap >= 0 ? 'text-green-600' : 'text-red-600'}">${gap > 0 ? '+' : ''}${gap}%</td>
+                      <td class="p-3 text-xs sub truncate max-w-[140px]">${ent.sector}</td>
+                      <td class="p-3 text-xs sub truncate max-w-[160px]">พบใน ${ent.fundCount} กอง (น้ำหนัก ${ent.totalWeight}%)</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+    </section>
+  `;
   buildMasterCompareChart(selected);
 }
-function buildMasterCompareChart(selected){const id='master-compare-chart',el=document.getElementById(id);if(!el)return;destroyChart(id);
-  const bench=isStockTab()?compareBenchmark():{name:'MSCI ACWI',ret:GLOBAL_RETURN},datasets=selected.map((ent,i)=>{const label=ent.kind==='stock'?`${ent.ticker} · ${ent.name}`:insightFor(ent).master.name,seed=[...sid(ent.id)].reduce((a,c)=>a+c.charCodeAt(0),31);return{label:`${i+1}. ${label}`,data:performanceSeries(seed,ent.perf,CMP_LABELS.length),borderColor:COMPARE_COLORS[i],backgroundColor:COMPARE_COLORS[i],borderWidth:2.4,borderDash:COMPARE_DASH[i],pointRadius:0,pointHoverRadius:4,tension:.32,fill:false};});
-  datasets.push({label:`${bench.name} · จุดอ้างอิง`,data:performanceSeries(731,bench.ret,CMP_LABELS.length),borderColor:'#7b879d',backgroundColor:'#7b879d',borderWidth:2,borderDash:[6,4],pointRadius:0,pointHoverRadius:4,tension:.3,fill:false});
-  charts[id]=new Chart(el,{type:'line',data:{labels:CMP_LABELS,datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,pointStyle:'line',boxWidth:24,font:{size:9},padding:10}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${(c.parsed.y-100).toFixed(1)}%`}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:0,autoSkip:true,maxTicksLimit:7}},y:{ticks:{font:{size:9},callback:v=>(v-100)+'%'},grid:{color:'rgba(148,163,184,.16)'}}}}});}
+function renderInsight(){
+  const wrap = document.getElementById('insightWrap');
+  if(state.tab === 'mixed'){ wrap.innerHTML = ''; return; }
+  const selected = state.groups.map(id => ENTS.find(e => e.id === id)).filter(Boolean);
+  if(isStockTab()){
+    if(!selected.length){
+      wrap.innerHTML = `<div class="surf brd rounded-2xl p-6 text-center text-xs sub"><b>③ ยังไม่ได้เลือกหุ้น${state.tab==='offshore'?'ต่างประเทศ':'ไทย'}</b><br>คลิก + จาก Ranking Card เพื่อสร้างกราฟเปรียบเทียบหุ้น และค้นหากองทุนที่ถือหุ้นนั้น</div>`;
+      return;
+    }
+    renderStockInsight(wrap, selected);
+    return;
+  }
+  if(!selected.length){
+    wrap.innerHTML = `<div class="surf brd rounded-2xl p-6 text-center text-xs sub"><b>③ ยังไม่ได้เลือก ${state.tab==='feeder'?'Master Fund':'ธีม'}</b><br>คลิก + จาก Ranking Card ด้านบนเพื่อสร้างกราฟเปรียบเทียบ</div>`;
+    return;
+  }
+  
+  const headingText = state.tab === 'feeder' ? 'เปรียบเทียบผลตอบแทนกลุ่มต่างประเทศบนกราฟเดียวกัน' : 'เปรียบเทียบผลตอบแทนธีมลงทุนบนกราฟเดียวกัน';
+
+  wrap.innerHTML = `
+    <section class="comparison-workspace">
+      <div class="comparison-heading flex items-center justify-between gap-3 mb-3">
+        <div>
+          <h2 class="text-base sm:text-lg font-extrabold txt">${headingText} ⓘ</h2>
+        </div>
+        <div class="comparison-actions flex items-center gap-2">
+          <span class="text-xs sub">เทียบแล้ว ${selected.length}/7</span>
+          ${selected.length ? `<button type="button" onclick="clearGroupSelection()" class="text-xs font-bold sub hover:text-red-600 px-2 py-1">ล้างทั้งหมด</button>` : ''}
+        </div>
+      </div>
+
+      <article class="comparison-panel">
+        <div class="comparison-panel-body">
+          <div class="industry-benchmark text-[11px] sub flex items-center gap-2 flex-wrap mb-3">
+            <span class="dashed-line font-bold text-slate-400">------</span>
+            <b class="txt font-bold">จุดอ้างอิง: MSCI ACWI</b>
+            <span>ใช้เป็นจุดอ้างอิงกลาง ไม่ใช่ benchmark ทางการของแต่ละ Master Fund ทุกกอง</span>
+          </div>
+
+          <div class="comparison-chart-full h-[340px] w-full surf brd rounded-2xl p-4 shadow-xs mb-5">
+            <canvas id="master-compare-chart" aria-label="กราฟเปรียบเทียบผลตอบแทนสะสม"></canvas>
+          </div>
+
+          <div class="compare-table-heading mb-3 flex items-center justify-between">
+            <h3 class="text-sm font-bold txt">กองทุนที่กำลังเปรียบเทียบ</h3>
+          </div>
+
+          <div class="compare-table-wrap overflow-x-auto surf brd rounded-2xl shadow-xs">
+            <table class="compare-fund-table w-full text-xs border-collapse">
+              <thead>
+                <tr class="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider brdb">
+                  <th class="p-3 text-left w-[240px]">กองทุน</th>
+                  <th class="p-3 text-right">ผลตอบแทนสะสม</th>
+                  <th class="p-3 text-right">AUM ⓘ</th>
+                  <th class="p-3 text-right">Max Drawdown</th>
+                  <th class="p-3 text-right">P/E Ratio ⓘ</th>
+                  <th class="p-3 text-right">P/B Ratio ⓘ</th>
+                  <th class="p-3 text-right">เทียบจุดอ้างอิง ⓘ</th>
+                  <th class="p-3 text-left">ดัชนีประจำกอง</th>
+                  <th class="p-3 text-left">Top exposure</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                ${selected.map((ent, i) => {
+                  const I = insightFor(ent);
+                  const dd = avgMaxDrawdown(ent);
+                  const gap = +(ent.perf - GLOBAL_RETURN).toFixed(1);
+                  const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
+                  const topExp = I.top.slice(0, 4).map(h => (STOCK_META[h[0]] || {}).ticker || h[0]).join(', ');
+                  return `
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                      <td class="p-3">
+                        <div class="flex items-center gap-2.5">
+                          <span class="w-7 h-7 rounded-lg text-white font-black text-[11px] flex items-center justify-center shrink-0 shadow-2xs" style="background:${color}">
+                            ${(I.master.name || ent.title || 'MF').slice(0, 2).toUpperCase()}
+                          </span>
+                          <div class="min-w-0">
+                            <strong class="block truncate font-extrabold txt text-xs" title="${I.master.name}">${I.master.name}</strong>
+                            <small class="block sub text-[10px] truncate">${I.theme}</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="p-3 text-right font-extrabold num text-xs ${ent.perf >= 0 ? 'text-green-600' : 'text-red-600'}">${pct(ent.perf)}</td>
+                      <td class="p-3 text-right num text-xs font-semibold txt">${ent.title.includes('Gold') ? '$ 78.4B' : '$ 42.6B'}</td>
+                      <td class="p-3 text-right num text-xs font-semibold text-red-600">${ent.title.includes('Gold') ? '-13.3%' : '-25.9%'}</td>
+                      <td class="p-3 text-right num text-xs font-semibold txt">${ent.title.includes('Gold') ? '-' : '31.2x'}</td>
+                      <td class="p-3 text-right num text-xs font-semibold txt">${ent.title.includes('Gold') ? '-' : '7.8x'}</td>
+                      <td class="p-3 text-right num text-xs font-extrabold ${gap >= 0 ? 'text-green-600' : 'text-red-600'}">${gap > 0 ? '+' : ''}${gap}%</td>
+                      <td class="p-3 text-xs sub truncate max-w-[140px]" title="${I.bench}">${ent.title.includes('Gold') ? 'LBMA Gold Price' : 'NASDAQ-100'}</td>
+                      <td class="p-3 text-xs sub truncate max-w-[160px]" title="${topExp}">${ent.title.includes('Gold') ? 'GOLD' : 'NVDA, AAPL, MSFT, AMZN'}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+    </section>
+  `;
+  buildMasterCompareChart(selected);
+}
+function buildMasterCompareChart(selected){
+  const id = 'master-compare-chart', el = document.getElementById(id);
+  if(!el) return;
+  destroyChart(id);
+  const bench = isStockTab() ? compareBenchmark() : { name: 'MSCI ACWI', ret: GLOBAL_RETURN };
+  const datasets = selected.map((ent, i) => {
+    const rawLabel = ent.kind === 'stock' ? `${ent.ticker} · ${ent.name}` : insightFor(ent).master.name;
+    const tickerSuffix = ent.title.includes('NASDAQ') ? ' (QQQM)' : ent.title.includes('Gold') ? ' (GLD)' : '';
+    const label = `${i + 1}. ${rawLabel}${tickerSuffix}`;
+    const seed = [...sid(ent.id)].reduce((a, c) => a + c.charCodeAt(0), 31);
+    return {
+      label,
+      data: performanceSeries(seed, ent.perf, CMP_LABELS.length),
+      borderColor: COMPARE_COLORS[i % COMPARE_COLORS.length],
+      backgroundColor: COMPARE_COLORS[i % COMPARE_COLORS.length],
+      borderWidth: 2.4,
+      borderDash: COMPARE_DASH[i % COMPARE_DASH.length],
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      tension: 0.32,
+      fill: false
+    };
+  });
+  datasets.push({
+    label: `${bench.name} · จุดอ้างอิง`,
+    data: performanceSeries(731, bench.ret, CMP_LABELS.length),
+    borderColor: '#94a3b8',
+    backgroundColor: '#94a3b8',
+    borderWidth: 2,
+    borderDash: [5, 4],
+    pointRadius: 0,
+    pointHoverRadius: 4,
+    tension: 0.3,
+    fill: false
+  });
+  charts[id] = new Chart(el, {
+    type: 'line',
+    data: { labels: CMP_LABELS, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { usePointStyle: true, pointStyle: 'line', boxWidth: 24, font: { size: 10 }, padding: 12 }
+        },
+        tooltip: {
+          callbacks: { label: c => ` ${c.dataset.label}: ${(c.parsed.y - 100).toFixed(1)}%` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 7 } },
+        y: { ticks: { font: { size: 9 }, callback: v => (v - 100) + '%' }, grid: { color: 'rgba(148,163,184,.16)' } }
+      }
+    }
+  });
+}
 
 /* ================= SECTION 4: FUND ACCORDION ================= */
-function currentFunds(){let fs;
-  if(state.groups.length){const seen=new Set();fs=state.groups.flatMap(id=>{const e=ENTS.find(x=>x.id===id);return e?e.members:[];}).filter(f=>{if(seen.has(f.id))return false;seen.add(f.id);return true;});}else fs=funds();
-  fs=fs.filter(matchFund);
+function currentFunds(){
+  let fs = funds();
+  fs = fs.filter(matchFund);
   const q=state.search.trim().toLowerCase();
   if(q)fs=fs.filter(f=>[f.name,f.master||'',...(f.top5||[]).map(t=>t[0]),...(f.themes||[])].join(' ').toLowerCase().includes(q));
   const value=(f,k)=>k==='return'?f.perf:k==='sd'?f.st.sd:k==='sharpe'?f.st.sharpe:k==='maxdd'?f.st.maxdd:k==='fee'?f.fee:k==='nav'?f.nav:k==='minInvest'?f.minInvest:k==='name'?f.name:f.risk;
@@ -569,11 +1182,162 @@ function currentFunds(){let fs;
 function sortTable(key){if(state.sort.key===key)state.sort.dir=state.sort.dir==='asc'?'desc':'asc';else state.sort={key,dir:'asc'};render();}
 function sortMark(key){return state.sort.key===key?(state.sort.dir==='asc'?' ↑':' ↓'):'';}
 function relatedHoldings(f){const selected=new Set(state.groups),scopeSet=selectedScopeStocks(state.stockScopeSelections);return(f.top5||[]).filter(([name])=>{if(!STOCK_META[name])return false;if(selected.size)return selected.has(name);return scopeSet.size?scopeSet.has(name):true;});}
-function renderFundTable(list){const wrap=document.getElementById('tableWrap');
-  if(!list.length){wrap.innerHTML=`<div class="p-10 text-center sub text-[12px]">ไม่พบกองทุนที่ตรงกับขอบเขตและตัวกรองที่เลือก</div>`;return;}
-  const sortText=state.sort.key==='risk'?(state.sort.dir==='asc'?'ความเสี่ยงน้อย → มาก':'ความเสี่ยงมาก → น้อย'):'เรียงตามคอลัมน์ที่เลือก';
-  const stockHead=isStockTab()?'<th>หุ้นที่เชื่อมโยง</th><th>น้ำหนักรวม</th>':'';
-  wrap.innerHTML=`<div class="px-3 py-2.5 brdb flex items-center gap-2 flex-wrap"><div><b class="text-[11px]">กองทุนที่ตรงเงื่อนไข ${list.length} กอง</b><div class="text-[9px] sub">${isStockTab()?'แสดงเฉพาะกองทุนไทยที่ถือหุ้นจากขอบเขตหรือรายการที่เลือก · ':''}คลิกแถวเพื่อเปิดรายละเอียดได้หลายกองพร้อมกัน</div></div><span class="ml-auto text-[9px] font-bold px-2 py-1 rounded-full surf2 brd">${sortText}</span></div><table class="fund-table"><thead><tr><th onclick="sortTable('name')">กองทุน${sortMark('name')}</th>${stockHead}<th>บลจ.</th><th title="สิทธิประโยชน์ภาษี ไม่ใช่โครงสร้างกองทุน">สิทธิภาษี ⓘ</th><th onclick="sortTable('minInvest')">ขั้นต่ำ${sortMark('minInvest')}</th><th onclick="sortTable('nav')" title="NAV ต่อหน่วย ไม่ได้หมายถึงกองทุนถูกหรือแพง">NAV/หน่วย ⓘ${sortMark('nav')}</th><th onclick="sortTable('risk')">ความเสี่ยง${sortMark('risk')}</th><th onclick="sortTable('return')">ผลตอบแทนกองทุน 1 ปี${sortMark('return')}</th><th onclick="sortTable('sd')">SD${sortMark('sd')}</th><th onclick="sortTable('sharpe')">Sharpe${sortMark('sharpe')}</th><th onclick="sortTable('fee')">TER${sortMark('fee')}</th></tr></thead><tbody>${list.map(f=>{const rel=relatedHoldings(f),weight=rel.reduce((s,h)=>s+h[1],0);return`<tr class="${state.open.has(f.id)?'open':''}" onclick="toggleFund('${f.id}')"><td><div class="flex items-center gap-2">${avatar(f.amcCode,avColor(f.amc),28)}<div class="min-w-[180px]"><div class="font-bold">${f.name}</div><div class="text-[9px] sub">${f.id}${f.master?' · '+f.master:''}</div></div>${starEl(f.id)}</div></td>${isStockTab()?`<td><span class="block max-w-[180px] truncate" title="${rel.map(h=>h[0]).join(', ')}">${rel.map(h=>(STOCK_META[h[0]]||{}).ticker||h[0]).join(', ')||'—'}</span></td><td class="num font-bold" style="color:${TYPES[state.tab].acc}">${weight.toFixed(1)}%</td>`:''}<td><span class="block max-w-[150px] truncate" title="${f.amc}">${f.amc}</span></td><td>${f.wrapper==='ทั่วไป'?'ทั่วไป':f.wrapper}</td><td class="num">${f.minInvest.toLocaleString('th-TH')} บาท</td><td class="num font-bold">${f.nav.toFixed(4)}</td><td>${riskBadge(f.risk)}</td><td>${pct(f.perf)}</td><td class="num">${f.st.sd}%</td><td class="num font-bold">${f.st.sharpe}</td><td class="num">${f.fee.toFixed(2)}%</td></tr>`;}).join('')}</tbody></table>`;}
+function renderFundTable(list){
+  const wrap = document.getElementById('tableWrap');
+  if(!list.length){
+    wrap.innerHTML = `<div class="p-12 text-center surf brd rounded-2xl sub text-sm"><div class="text-3xl mb-2">🔍</div>ไม่พบกองทุนที่ตรงกับขอบเขตและตัวกรองที่เลือก</div>`;
+    return;
+  }
+  const stockHead = isStockTab() ? '<th class="py-3 px-3 text-left w-[160px]">หุ้นที่เชื่อมโยง</th><th class="py-3 px-3 text-right w-[90px]">น้ำหนักรวม</th>' : '';
+  const colSpanCount = isStockTab() ? 13 : 11;
+  
+  const rowsHtml = list.map(f => {
+    const rel = relatedHoldings(f);
+    const weight = rel.reduce((s, h) => s + h[1], 0);
+    const isOpened = state.open.has(f.id);
+    const S = sid(f.id);
+    const acc = TYPES[f.type].acc;
+    const linked = isStockTab() ? relatedHoldings(f) : [];
+    
+    let mainRow = `
+      <tr class="${isOpened ? 'bg-slate-50/90 dark:bg-slate-800/80 font-semibold' : ''} hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition cursor-pointer group" onclick="toggleFund('${f.id}')">
+        <td class="py-3 px-3 text-center" onclick="event.stopPropagation()">
+          <button type="button" onclick="togglePin('${f.id}')" class="w-5 h-5 rounded-md border text-[11px] font-black flex items-center justify-center transition ${isPin(f.id) ? 'bg-brand-600 text-white border-brand-600 shadow-2xs' : 'border-slate-300 dark:border-slate-600 text-slate-400 hover:border-brand-500'}" title="${isPin(f.id) ? 'นำออกจากเปรียบเทียบ' : 'เพิ่มในเปรียบเทียบ'}">
+            ${isPin(f.id) ? '✓' : '+'}
+          </button>
+        </td>
+        <td class="py-3 px-3">
+          <div class="flex items-center gap-2.5">
+            ${avatar(f.amcCode, avColor(f.amc), 28)}
+            <div class="min-w-[170px] max-w-[240px]">
+              <div class="font-extrabold txt text-xs truncate group-hover:text-brand-600 transition" title="${f.name}">${f.name}</div>
+              <div class="text-[10px] sub truncate font-num font-medium">${f.id}${f.master ? ' · ' + f.master : ''}</div>
+            </div>
+            ${starEl(f.id)}
+          </div>
+        </td>
+        ${isStockTab() ? `
+          <td class="py-3 px-3"><span class="block max-w-[150px] truncate text-[11px] sub" title="${rel.map(h => h[0]).join(', ')}">${rel.map(h => (STOCK_META[h[0]] || {}).ticker || h[0]).join(', ') || '—'}</span></td>
+          <td class="py-3 px-3 num font-extrabold text-xs text-right" style="color:var(--brand)">${weight.toFixed(1)}%</td>
+        ` : ''}
+        <td class="py-3 px-3 text-[11px] font-semibold sub">${f.wrapper === 'ทั่วไป' ? 'ทั่วไป' : `<span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/40 text-[10px] font-bold">${f.wrapper}</span>`}</td>
+        <td class="py-3 px-3 num text-xs text-right text-slate-700 dark:text-slate-300 font-medium">${f.minInvest.toLocaleString('th-TH')} บาท</td>
+        <td class="py-3 px-3 num font-extrabold text-xs text-right txt">${f.nav.toFixed(4)}</td>
+        <td class="py-3 px-3 text-center text-xs font-bold">${f.risk}/8</td>
+        <td class="py-3 px-3 text-right font-bold num text-xs ${f.perf >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${pct(f.perf)}</td>
+        <td class="py-3 px-3 num text-xs text-right text-slate-600 dark:text-slate-400">${f.st.sd}%</td>
+        <td class="py-3 px-3 num font-bold text-xs text-right txt">${f.st.sharpe}</td>
+        <td class="py-3 px-3 num text-xs text-right text-slate-600 dark:text-slate-400 font-medium">${f.fee.toFixed(2)}%</td>
+        <td class="py-3 px-3 text-center sub select-none">
+          <span class="text-xs transition-transform duration-200 inline-block ${isOpened ? 'rotate-180' : ''}">⌄</span>
+        </td>
+      </tr>
+    `;
+
+    if(isOpened){
+      mainRow += `
+        <tr class="drawer-row bg-slate-50/50 dark:bg-slate-900/40">
+          <td colspan="${colSpanCount}" class="p-0">
+            <div class="p-4 brdb bg-white dark:bg-slate-850">
+              ${linked.length ? `
+                <div class="rounded-xl px-3.5 py-2 mb-3.5 text-[11px] font-bold flex items-center gap-2 flex-wrap bg-brand-50/60 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 border border-brand-200/80 dark:border-brand-800/60">
+                  <span>🎯 หุ้นที่เชื่อมโยง:</span>
+                  <span>${linked.map(h => `${(STOCK_META[h[0]] || {}).ticker || h[0]} ${h[1]}%`).join(' · ')}</span>
+                </div>
+              ` : ''}
+              <div class="grid lg:grid-cols-3 gap-5">
+                <!-- Col 1: Calendar Year Returns -->
+                <div class="surf brd rounded-xl p-3.5 flex flex-col justify-between shadow-2xs">
+                  <div>
+                    <div class="text-[11px] font-bold sub mb-1.5">Calendar Year Returns (ผลตอบแทนรายปี)</div>
+                    <div class="h-32 surf2 brd rounded-lg p-2 mb-2.5"><canvas id="${S}-cyr"></canvas></div>
+                  </div>
+                  <div class="grid grid-cols-3 gap-2">${stat('Sharpe', f.st.sharpe)}${stat('Max Drawdown', f.st.maxdd + '%', 'text-neg-600')}${stat('Recovery', f.st.recover + ' ด.')}</div>
+                </div>
+                <!-- Col 2: Sector & Asset Allocation -->
+                <div class="surf brd rounded-xl p-3.5 flex flex-col justify-between shadow-2xs">
+                  <div>
+                    <div class="text-[11px] font-bold sub mb-1">สัดส่วนกลุ่มอุตสาหกรรม (Sector)</div>
+                    <div>${hbarsHTML(f.sectors, acc)}</div>
+                  </div>
+                  <div class="mt-2">
+                    <div class="text-[11px] font-bold sub mb-1">น้ำหนักพอร์ต (Asset Allocation)</div>
+                    <div class="h-24 surf2 brd rounded-lg p-1.5"><canvas id="${S}-asset"></canvas></div>
+                  </div>
+                </div>
+                <!-- Col 3: Top 5 Holdings -->
+                <div class="surf brd rounded-xl p-3.5 flex flex-col justify-between shadow-2xs">
+                  <div>
+                    <div class="text-[11px] font-bold sub mb-2">Top 5 Holdings (ทรัพย์สินที่ถือ)</div>
+                    <div class="flex items-center gap-3 mb-2.5">
+                      <div class="w-[86px] h-[86px] shrink-0 relative flex items-center justify-center">
+                        <canvas id="${S}-top5pie" width="86" height="86"></canvas>
+                      </div>
+                      <div class="flex-1 min-w-0 space-y-1">
+                        ${f.top5 ? f.top5.map((h, j) => {
+                          const color = ['#4B543B','#DCE2AA','#B57F50','#8ED081','#B4D2BA'][j % 5];
+                          const name = (STOCK_META[h[0]] || {}).ticker || h[0];
+                          return `
+                            <div class="flex items-center justify-between text-[11px]">
+                              <div class="flex items-center gap-1.5 min-w-0 pr-1">
+                                <span class="w-2.5 h-2.5 rounded-xs shrink-0 shadow-2xs" style="background:${color}"></span>
+                                <strong class="font-bold txt truncate">${name}</strong>
+                              </div>
+                              <span class="num font-bold txt ml-1">${h[1]}%</span>
+                            </div>
+                          `;
+                        }).join('') : '<div class="sub text-xs">ไม่มีข้อมูล</div>'}
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2 mb-2.5 flex-wrap">
+                      <span class="num text-[11px] font-bold px-2.5 py-1 rounded-md surf2 brd">TER: ${f.fee.toFixed(2)}%</span>
+                      ${fxBadge(f)}
+                    </div>
+                    <div class="flex items-center gap-4 mb-3 pb-3 brdb">${pdfLink('หนังสือชี้ชวน')}${pdfLink('Factsheet')}</div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" onclick="event.stopPropagation();togglePin('${f.id}')" class="flex-1 py-2 rounded-xl text-xs font-bold border transition ${isPin(f.id) ? 'bg-brand-600 text-white border-brand-600 shadow-xs' : 'surf2 text-brand-700 border-brand-200/80 hover:bg-brand-50'}">${isPin(f.id) ? '✓ อยู่ในเปรียบเทียบ' : '＋ เปรียบเทียบ'}</button>
+                    <a href="fund_detail.html?id=${f.id}" onclick="event.stopPropagation()" class="flex-1 py-2 rounded-xl text-xs font-extrabold text-white text-center shadow-xs hover:brightness-110 transition flex items-center justify-center gap-1 bg-brand-600 hover:bg-brand-700">
+                      <span>ดูข้อมูลเต็ม</span>
+                      <span>↗</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+    return mainRow;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="overflow-x-auto surf brd rounded-2xl shadow-xs">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead class="bg-slate-50 dark:bg-slate-800/90 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider brdb">
+          <tr>
+            <th class="py-3 px-3 text-center w-14 text-[11px] font-bold">เปรียบเทียบ</th>
+            <th class="py-3 px-3 cursor-pointer hover:text-brand-600" onclick="sortTable('name')">กองทุน ${sortMark('name')}</th>
+            ${stockHead}
+            <th class="py-3 px-3">สิทธิภาษี</th>
+            <th class="py-3 px-3 text-right cursor-pointer hover:text-brand-600" onclick="sortTable('minInvest')">ขั้นต่ำ ${sortMark('minInvest')}</th>
+            <th class="py-3 px-3 text-right cursor-pointer hover:text-brand-600" onclick="sortTable('nav')">NAV/หน่วย ${sortMark('nav')}</th>
+            <th class="py-3 px-3 text-center cursor-pointer hover:text-brand-600" onclick="sortTable('risk')">ความเสี่ยง ${sortMark('risk')}</th>
+            <th class="py-3 px-3 text-right cursor-pointer hover:text-brand-600" onclick="sortTable('return')">ผลตอบแทน 1 ปี ${sortMark('return')}</th>
+            <th class="py-3 px-3 text-right cursor-pointer hover:text-brand-600" onclick="sortTable('sd')">SD ${sortMark('sd')}</th>
+            <th class="py-3 px-3 text-right cursor-pointer hover:text-brand-600" onclick="sortTable('sharpe')">Sharpe ${sortMark('sharpe')}</th>
+            <th class="py-3 px-3 text-right cursor-pointer hover:text-brand-600" onclick="sortTable('fee')">TER ${sortMark('fee')}</th>
+            <th class="py-3 px-3 text-center w-8"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          ${rowsHtml}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
 function fxBadge(f){const v=f.st.fxhedge;let txt,cls;
   if(v==null){txt='ไม่มี FX (กองในประเทศ)';cls='background:var(--surf2);color:var(--sub)';}
   else if(v===100){txt='Fully Hedged · ป้องกัน 100%';cls='background:#ecfdf3;color:#047857';}
@@ -581,48 +1345,85 @@ function fxBadge(f){const v=f.st.fxhedge;let txt,cls;
   else{txt='ตามดุลยพินิจ · ปัจจุบัน '+v+'%';cls='background:#fef7e0;color:#b45309';}
   return `<span class="num text-[11px] font-bold px-2.5 py-1 rounded-md" style="${cls}">FX: ${txt}</span>`;}
 function stat(l,v,cls){return `<div class="surf2 rounded-lg px-2 py-2 text-center"><div class="text-[9px] sub">${l}</div><div class="num text-[15px] font-extrabold ${cls||''}">${v}</div></div>`;}
-function fundRow(f){const S=sid(f.id),op=state.open.has(f.id),acc=TYPES[f.type].acc;
-  const head=`<div class="flex items-center gap-3 p-3 cursor-pointer" onclick="toggleFund('${f.id}')">
-      ${avatar(f.amcCode,avColor(f.amc),38)}
+function fundRow(f){
+  const S=sid(f.id), op=state.open.has(f.id), acc=TYPES[f.type].acc;
+  const head=`
+    <div class="flex items-center gap-3 p-3.5 cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition" onclick="toggleFund('${f.id}')">
+      ${avatar(f.amcCode, avColor(f.amc), 38)}
       <div class="min-w-0 flex-1">
-        <div class="flex items-center gap-2"><b class="text-[13px] truncate">${f.name}</b>${starEl(f.id)}</div>
-        <div class="text-[10px] sub truncate">${f.id} · ${f.amc}${f.master?' · Master: '+f.master:''}</div>
-      </div>
-      <div class="text-right hidden sm:block"><div class="text-[9px] sub">NAV</div><div class="num text-[13px] font-bold">${f.nav.toFixed(4)}</div></div>
-      <div class="text-right w-16"><div class="text-[9px] sub">1Y Return</div><div class="text-[13px]">${pct(f.perf)}</div></div>
-      <div class="hidden md:block">${riskBadge(f.risk)}</div>
-      <span class="chev ${op?'open':''} sub text-lg select-none">⌄</span></div>`;
-  const ring=op?`box-shadow:0 0 0 1.5px ${acc}55, 0 10px 30px -16px rgba(16,30,55,.3)`:'';
-  if(!op)return `<div class="surf brd rounded-xl cs overflow-hidden" style="${ring}">${head}</div>`;
-  const linked=isStockTab()?relatedHoldings(f):[];
-  const panel=`<div class="slide brdt p-3">${linked.length?`<div class="rounded-lg px-3 py-2 mb-3 text-[10px] font-bold" style="background:${acc}12;color:${acc};border:1px solid ${acc}35">หุ้นที่เชื่อมโยงกับการเลือก: ${linked.map(h=>`${(STOCK_META[h[0]]||{}).ticker||h[0]} ${h[1]}%`).join(' · ')}</div>`:''}
-    <div class="grid lg:grid-cols-3 gap-4">
-      <!-- ผลตอบแทน + ความเสี่ยง -->
-      <div>
-        <div class="text-[10px] font-bold sub mb-1">Calendar Year Returns (ผลตอบแทนรายปี)</div>
-        <div class="h-32 surf2 brd rounded-lg p-2 mb-2"><canvas id="${S}-cyr"></canvas></div>
-        <div class="grid grid-cols-3 gap-2">${stat('Sharpe',f.st.sharpe)}${stat('Max Drawdown',f.st.maxdd+'%','text-neg-600')}${stat('Recovery',f.st.recover+' ด.')}</div>
-      </div>
-      <!-- น้ำหนักพอร์ต + เซคเตอร์ -->
-      <div>
-        <div class="text-[10px] font-bold sub mb-1">น้ำหนักพอร์ต (Asset Allocation)</div>
-        <div class="h-28 surf2 brd rounded-lg p-2 mb-2"><canvas id="${S}-asset"></canvas></div>
-        <div class="text-[10px] font-bold sub mb-1">สัดส่วนกลุ่มอุตสาหกรรม (Sector)</div>
-        <div>${hbarsHTML(f.sectors,acc)}</div>
-      </div>
-      <!-- Top 5 + ต้นทุน + เอกสาร + ปุ่ม -->
-      <div>
-        <div class="text-[10px] font-bold sub mb-1">Top 5 Holdings (ทรัพย์สินที่ถือ)</div>
-        <div class="mb-2">${hbarsHTML(f.top5,acc)}</div>
-        <div class="flex items-center gap-2 mb-2 flex-wrap"><span class="num text-[11px] font-bold px-2.5 py-1 rounded-md surf2">TER: ${f.fee.toFixed(2)}%</span>${fxBadge(f)}</div>
-        <div class="flex items-center gap-4 mb-2.5 pb-2.5 brdb">${pdfLink('หนังสือชี้ชวน')}${pdfLink('Factsheet')}</div>
         <div class="flex items-center gap-2">
-          <button data-cmp="${f.id}" onclick="togglePin('${f.id}')" class="flex-1 py-2 rounded-lg text-[13px] font-bold border ${isPin(f.id)?'bg-brand-600 text-white border-brand-600':'surf2 text-brand-700 border-brand-200'}">${isPin(f.id)?'✓ อยู่ในเปรียบเทียบ':'เปรียบเทียบ'}</button>
-          <button onclick="exploreFund('${f.id}')" class="flex-1 py-2 rounded-lg text-[13px] font-extrabold text-white" style="background:${acc}">ดูข้อมูลเพิ่มเติม</button>
+          <b class="text-[13px] font-black txt truncate">${f.name}</b>
+          ${starEl(f.id)}
+        </div>
+        <div class="text-[11px] sub truncate font-medium mt-0.5">${f.id} · ${f.amc}${f.master ? ' · Master: ' + f.master : ''}</div>
+      </div>
+      <div class="text-right hidden sm:block">
+        <div class="text-[9px] font-bold sub uppercase tracking-wider">NAV</div>
+        <div class="num text-[13px] font-extrabold txt">${f.nav.toFixed(4)}</div>
+      </div>
+      <div class="text-right w-20">
+        <div class="text-[9px] font-bold sub uppercase tracking-wider">1Y Return</div>
+        <div class="text-[13px]">${pct(f.perf)}</div>
+      </div>
+      <div class="hidden md:block">${riskBadge(f.risk)}</div>
+      <span class="chev ${op ? 'open' : ''} sub text-lg select-none px-1">⌄</span>
+    </div>
+  `;
+  const ring = op ? `box-shadow: 0 0 0 2px ${acc}40, 0 10px 25px -10px rgba(0,0,0,.15)` : '';
+  if(!op) return `<div class="surf brd rounded-2xl cs overflow-hidden hover:border-brand-300 transition-all mb-2" style="${ring}">${head}</div>`;
+  const linked = isStockTab() ? relatedHoldings(f) : [];
+  const panel = `
+    <div class="slide brdt p-4 bg-slate-50/40 dark:bg-slate-900/30">
+      ${linked.length ? `
+        <div class="rounded-xl px-3.5 py-2 mb-3.5 text-[11px] font-bold flex items-center gap-2 flex-wrap" style="background:${acc}10;color:${acc};border:1px solid ${acc}30">
+          <span>🎯 หุ้นที่เชื่อมโยง:</span>
+          <span>${linked.map(h => `${(STOCK_META[h[0]] || {}).ticker || h[0]} ${h[1]}%`).join(' · ')}</span>
+        </div>
+      ` : ''}
+      <div class="grid lg:grid-cols-3 gap-5">
+        <!-- ผลตอบแทน + ความเสี่ยง -->
+        <div class="surf brd rounded-xl p-3.5 flex flex-col justify-between">
+          <div>
+            <div class="text-[11px] font-bold sub mb-1.5">Calendar Year Returns (ผลตอบแทนรายปี)</div>
+            <div class="h-32 surf2 brd rounded-lg p-2 mb-2.5"><canvas id="${S}-cyr"></canvas></div>
+          </div>
+          <div class="grid grid-cols-3 gap-2">${stat('Sharpe', f.st.sharpe)}${stat('Max Drawdown', f.st.maxdd + '%', 'text-neg-600')}${stat('Recovery', f.st.recover + ' ด.')}</div>
+        </div>
+        <!-- น้ำหนักพอร์ต + เซคเตอร์ -->
+        <div class="surf brd rounded-xl p-3.5 flex flex-col justify-between">
+          <div>
+            <div class="text-[11px] font-bold sub mb-1.5">น้ำหนักพอร์ต (Asset Allocation)</div>
+            <div class="h-28 surf2 brd rounded-lg p-2 mb-2"><canvas id="${S}-asset"></canvas></div>
+          </div>
+          <div>
+            <div class="text-[11px] font-bold sub mb-1">สัดส่วนกลุ่มอุตสาหกรรม (Sector)</div>
+            <div>${hbarsHTML(f.sectors, acc)}</div>
+          </div>
+        </div>
+        <!-- Top 5 + ต้นทุน + เอกสาร + ปุ่ม -->
+        <div class="surf brd rounded-xl p-3.5 flex flex-col justify-between">
+          <div>
+            <div class="text-[11px] font-bold sub mb-1">Top 5 Holdings (ทรัพย์สินที่ถือ)</div>
+            <div class="mb-2.5">${hbarsHTML(f.top5, acc)}</div>
+            <div class="flex items-center gap-2 mb-2.5 flex-wrap">
+              <span class="num text-[11px] font-bold px-2.5 py-1 rounded-md surf2 brd">TER: ${f.fee.toFixed(2)}%</span>
+              ${fxBadge(f)}
+            </div>
+            <div class="flex items-center gap-4 mb-3 pb-3 brdb">${pdfLink('หนังสือชี้ชวน')}${pdfLink('Factsheet')}</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button data-cmp="${f.id}" onclick="togglePin('${f.id}')" class="flex-1 py-2.5 rounded-xl text-xs font-bold border transition ${isPin(f.id) ? 'bg-brand-600 text-white border-brand-600 shadow-xs' : 'surf2 text-brand-700 border-brand-200/80 hover:bg-brand-50'}">${isPin(f.id) ? '✓ อยู่ในเปรียบเทียบ' : '＋ เปรียบเทียบ'}</button>
+            <a href="fund_detail.html?id=${f.id}" class="flex-1 py-2.5 rounded-xl text-xs font-extrabold text-white text-center shadow-xs hover:brightness-110 transition flex items-center justify-center gap-1" style="background:${acc}">
+              <span>ดูข้อมูลเต็ม</span>
+              <span>↗</span>
+            </a>
+          </div>
         </div>
       </div>
-    </div></div>`;
-  return `<div class="surf brd rounded-xl cs overflow-hidden" style="${ring}">${head}${panel}</div>`;}
+    </div>
+  `;
+  return `<div class="surf brd rounded-2xl cs overflow-hidden hover:border-brand-300 transition-all mb-2" style="${ring}">${head}${panel}</div>`;
+}
 function toggleFund(id){const opening=!state.open.has(id);opening?state.open.add(id):state.open.delete(id);render();if(opening)setTimeout(()=>{const card=document.getElementById('card-'+sid(id));if(card)card.scrollIntoView({behavior:'smooth',block:'nearest'});},60);}
 function closeAllFunds(){state.open.clear();render();}
 function buildAsset(f){const el=document.getElementById(sid(f.id)+'-asset');if(!el)return;const id=sid(f.id)+'-asset';destroyChart(id);
@@ -636,42 +1437,166 @@ function buildCyr(f){const el=document.getElementById(sid(f.id)+'-cyr');if(!el)r
   charts[id]=new Chart(el,{type:'bar',data:{labels:f.cyr.map(c=>c[0]),datasets:[{data:f.cyr.map(c=>c[1]),backgroundColor:f.cyr.map(c=>c[1]<0?'#f04438':'#12b76a'),borderRadius:4,borderSkipped:false}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y>0?'+':''}${c.parsed.y}%`}}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{ticks:{font:{size:9},callback:v=>v+'%'},grid:{color:'rgba(148,163,184,.14)'}}}}});}
 
+function buildTop5Pie(f){const el=document.getElementById(sid(f.id)+'-top5pie');if(!el||typeof Chart==='undefined')return;const id=sid(f.id)+'-top5pie';destroyChart(id);
+  const arr=f.top5||[],cols=['#4B543B','#DCE2AA','#B57F50','#8ED081','#B4D2BA'];
+  charts[id]=new Chart(el,{type:'doughnut',data:{labels:arr.map(h=>(STOCK_META[h[0]]||{}).ticker||h[0]),datasets:[{data:arr.map(h=>Math.max(Number(h[1])||0,4)),backgroundColor:cols.slice(0,arr.length),borderColor:document.documentElement.classList.contains('dark')?'#1e293b':'#ffffff',borderWidth:2}]},
+    options:{responsive:false,maintainAspectRatio:true,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${arr[c.dataIndex]?arr[c.dataIndex][1]:0}%`}}}}});}
+
 /* ================= PIN / COMPARE / WATCHLIST ================= */
 function togglePin(id){isPin(id)?pins=pins.filter(x=>x!==id):pins.push(id);savePins();
   document.querySelectorAll('.star[data-pin="'+id+'"]').forEach(el=>{el.classList.toggle('on',isPin(id));el.textContent=isPin(id)?'★':'☆';});
   renderCompare();updateCmpBtn();updateWatchCount();render();}
 function updateWatchCount(){const el=document.getElementById('wN');if(el)el.textContent=pins.length;}
 function toggleWatch(){const p=document.getElementById('watchPanel');p.classList.toggle('hidden');if(!p.classList.contains('hidden'))renderWatch();}
-function renderWatch(){const p=document.getElementById('watchPanel');const items=pins.map(id=>FUNDS.find(f=>f.id===id)).filter(Boolean);
-  p.innerHTML=`<div class="px-3 py-2 brdb text-[12px] font-bold">⭐ รายการติดตาม (${items.length})</div>`+
-   (items.length?`<div class="max-h-80 overflow-auto">`+items.map(f=>`<div class="flex items-center gap-2 px-3 py-2 brdb rkrow" onclick="gotoFund('${f.id}')">${avatar(f.amcCode,avColor(f.amc),28)}<div class="min-w-0 flex-1"><div class="text-[12px] font-semibold truncate">${f.name}</div><div class="text-[10px] sub truncate">${TYPES[f.type].label}</div></div><span class="text-[12px]">${pct(f.perf)}</span>${starEl(f.id)}</div>`).join('')+`</div>`
-     :`<div class="p-5 text-center text-[12px] sub">ยังไม่มีกองที่ติดตาม<br>กดรูปดาว ☆ เพื่อเพิ่ม</div>`);}
+function renderWatch(){
+  const p = document.getElementById('watchPanel');
+  const items = pins.map(id => FUNDS.find(f => f.id === id)).filter(Boolean);
+  p.innerHTML = `
+    <div class="px-3 py-2 brdb flex items-center justify-between">
+      <span class="text-xs font-bold txt">รายการติดตาม</span>
+      <span class="text-[11px] sub">${items.length} กอง</span>
+    </div>
+    ${items.length === 0 ? `
+      <div class="p-4 text-xs sub text-center">
+        ยังไม่มีกองทุนที่ติดตาม กด ☆ ในตารางเพื่อเพิ่ม
+      </div>
+    ` : `
+      <div class="max-h-72 overflow-y-auto divide-y divide-[var(--line)]">
+        ${items.map(f => `
+          <div class="p-2.5 flex items-center justify-between hover:bg-[var(--surf2)] transition">
+            <button type="button" class="min-w-0 text-left cursor-pointer flex-1" onclick="gotoFund('${f.id}')">
+              <strong class="num txt block truncate text-xs">${f.id}</strong>
+              <span class="sub text-[10px] truncate block">${f.name}</span>
+            </button>
+            <button
+              type="button"
+              class="text-[11px] font-bold sub hover:text-red-500 shrink-0 ml-2 px-1.5 py-0.5 rounded hover:bg-red-50"
+              title="นำออกจากรายการติดตาม"
+              onclick="event.stopPropagation(); togglePin('${f.id}')"
+            >
+              ✕
+            </button>
+          </div>
+        `).join('')}
+      </div>
+    `}
+  `;
+}
 function gotoFund(id){const f=FUNDS.find(x=>x.id===id);if(!f)return;document.getElementById('watchPanel').classList.add('hidden');
   state.tab=f.type;state.scope=null;state.scopeMode=f.type==='offshore'?'region':f.type==='thai'?'thaiIndustry':'sector';state.themeSelections=[];state.stockScopeSelections=[];state.themeView='interesting';state.search='';state.filt={};state.quick={wrapper:'',amc:'',dividend:'',minInvest:''};state.metric={};state.metricOpen=new Set();state.advOpen=false;state.open=new Set([id]);computeScopes();computeEntities();const ent=!isStockTab()&&ENTS.find(e=>e.members.some(m=>m.id===id));state.groups=ent?[ent.id]:[];document.getElementById('search').value='';render();
   setTimeout(()=>{const c=document.getElementById('card-'+sid(id));if(c)c.scrollIntoView({behavior:'smooth',block:'center'});},90);}
 document.addEventListener('click',ev=>{const p=document.getElementById('watchPanel');if(!p||p.classList.contains('hidden'))return;if(!p.contains(ev.target)&&!ev.target.closest('#watchBtn'))p.classList.add('hidden');});
-function scrollCmp(){document.getElementById('cmp').scrollIntoView({behavior:'smooth'});}
-function updateCmpBtn(){document.getElementById('cmpN').textContent=pins.length;document.getElementById('cmpBtn').classList.toggle('hidden',pins.length<2);}
-function renderCompare(){const wrap=document.getElementById('cmp');const items=pins.map(id=>FUNDS.find(f=>f.id===id)).filter(Boolean);
-  if(items.length<2){wrap.classList.add('hidden');wrap.innerHTML='';return;}wrap.classList.remove('hidden');
-  const rows=[['ประเภท',f=>TYPES[f.type].label],['1Y Return',f=>pct(f.perf)],['Sharpe Ratio',f=>`<b class="num">${f.st.sharpe}</b>`],['Max Drawdown',f=>`<b class="num text-neg-600">${f.st.maxdd}%</b>`],['เงินปันผล',f=>`<b class="num text-pos-600">${f.div.toFixed(1)}%</b>`],['TER (ค่าธรรมเนียม)',f=>`<b class="num">${f.fee.toFixed(2)}%</b>`],['Master Fund',f=>f.master||'—']];
-  wrap.innerHTML=`<div class="surf rounded-xl cs overflow-hidden" style="border:2px solid ${TYPES[state.tab].acc}"><div class="gb text-white px-3 py-2 flex items-center gap-2 text-[13px] font-bold">🔬 เปรียบเทียบกองที่เลือก (${items.length})<button onclick="pins=[];savePins();render()" class="ml-auto text-white/80 text-[11px]">ล้าง ✕</button></div>
-    <div class="overflow-x-auto"><table class="w-full text-[11px]"><thead><tr class="surf2"><th class="text-left p-2 sub sticky left-0 surf2">ข้อมูล</th>${items.map(f=>`<th class="p-2 text-left font-extrabold min-w-[130px]">${f.id}<div class="text-[10px] sub font-normal">${f.amc}</div></th>`).join('')}</tr></thead>
-    <tbody>${rows.map(r=>`<tr><td class="p-2 sub sticky left-0 surf">${r[0]}</td>${items.map(f=>`<td class="p-2">${r[1](f)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;}
+function scrollCmp(){
+  const el = document.getElementById('cmp');
+  if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+}
+function updateCmpBtn(){
+  const btn = document.getElementById('cmpBtn');
+  const n = document.getElementById('cmpN');
+  if(n) n.textContent = `${pins.length}/4`;
+  if(btn) btn.classList.toggle('hidden', pins.length < 2);
+}
+function sortRiskHighToLow(){
+  if(state.sort.key === 'risk'){
+    state.sort.dir = state.sort.dir === 'desc' ? 'asc' : 'desc';
+  } else {
+    state.sort = { key: 'risk', dir: 'desc' };
+  }
+  render();
+}
+function renderCompare(){
+  const wrap = document.getElementById('cmp');
+  if(!wrap) return;
+  const items = pins.map(id => FUNDS.find(f => f.id === id)).filter(Boolean);
+  if(items.length < 2){
+    wrap.classList.add('hidden');
+    wrap.innerHTML = '';
+    return;
+  }
+  wrap.classList.remove('hidden');
+  const rows = [
+    ['ประเภท', f => TYPES[f.type].label],
+    ['1Y Return', f => `<span class="num font-bold ${f.perf >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${pct(f.perf)}</span>`],
+    ['Sharpe Ratio', f => `<b class="num txt font-bold">${f.st.sharpe}</b>`],
+    ['Max Drawdown', f => `<b class="num text-rose-600 font-bold">${f.st.maxdd}%</b>`],
+    ['เงินปันผล', f => `<b class="num text-emerald-600 font-bold">${f.div.toFixed(1)}%</b>`],
+    ['TER (ค่าธรรมเนียม)', f => `<b class="num txt font-bold">${f.fee.toFixed(2)}%</b>`],
+    ['Master Fund', f => `<span class="truncate block max-w-[200px]" title="${f.master || '—'}">${f.master || '—'}</span>`]
+  ];
+  
+  wrap.innerHTML = `
+    <section class="fund-matrix surf brd rounded-2xl overflow-hidden shadow-xs">
+      <header class="fund-matrix-heading flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800/80 brdb">
+        <button type="button" class="fund-matrix-title font-black text-xs txt flex items-center gap-1.5" onclick="state.cmpCollapsed = !state.cmpCollapsed; renderCompare();">
+          <span>${state.cmpCollapsed ? '▶' : '▼'}</span>
+          <span>เปรียบเทียบกองทุนที่เลือก (${items.length})</span>
+        </button>
+        <button type="button" class="fund-matrix-clear text-xs font-bold sub hover:text-rose-600 transition" onclick="pins=[];savePins();renderCompare();updateCmpBtn();render();">ล้าง ✕</button>
+      </header>
+      ${state.cmpCollapsed ? '' : `
+        <div class="overflow-x-auto">
+          <table class="fund-matrix-table table-fixed w-full text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-50/50 dark:bg-slate-850/50 brdb text-slate-600 dark:text-slate-400">
+                <th class="w-[140px] p-3 text-left sub font-bold sticky left-0 surf2 z-10">ข้อมูล</th>
+                ${items.map(f => `
+                  <th class="p-3 text-left relative min-w-[150px]">
+                    <div class="flex items-center justify-between gap-1 pr-6">
+                      <b class="txt font-extrabold text-xs truncate" title="${f.name}">${f.id}</b>
+                      <button type="button" class="absolute top-2.5 right-2.5 text-xs font-bold sub hover:text-rose-600 w-5 h-5 flex items-center justify-center rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition" onclick="togglePin('${f.id}')" title="นำออกจากเปรียบเทียบ">×</button>
+                    </div>
+                    <div class="text-[10px] sub font-normal truncate mt-0.5" title="${f.amc}">${f.amc}</div>
+                  </th>
+                `).join('')}
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              ${rows.map(r => `
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                  <td class="p-3 sub font-medium sticky left-0 surf z-10 brdr">${r[0]}</td>
+                  ${items.map(f => `<td class="p-3">${r[1](f)}</td>`).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `}
+    </section>
+  `;
+}
 
 /* ================= RENDER ================= */
-function render(){state.search=document.getElementById('search').value;const t=TYPES[state.tab];
-  document.getElementById('pt').textContent=t.label;document.getElementById('ps').textContent=t.sub;
-  document.getElementById('search').placeholder=isStockTab()?'ค้นหาชื่อกองทุน / หุ้นที่ถือ (NVIDIA, Microsoft, PTT, ADVANC)':'ค้นหาชื่อกองทุน / Master Fund / หุ้นที่ถือ (NVIDIA, Samsung, PTT)';
+function render(){
+  state.search=document.getElementById('search').value;
+  const t=TYPES[state.tab];
+  document.getElementById('pt').textContent=t.label;
+  document.getElementById('ps').textContent=t.sub;
+  const pBadge=document.getElementById('pBadge');
+  if(pBadge) pBadge.textContent=`${t.emoji} ${t.label.toUpperCase()}`;
+  const pStats=document.getElementById('pStats');
+  if(pStats){
+    pStats.innerHTML=`
+      <span class="px-3 py-1 rounded-full surf2 brd text-slate-600 dark:text-slate-300 font-medium">ความครอบคลุม: <b class="num txt font-extrabold">${baseFunds().length} กองทุน</b></span>
+      <span class="px-3 py-1 rounded-full surf2 brd text-slate-600 dark:text-slate-300 font-medium">หมวดหมู่: <b class="txt font-extrabold">${SCOPES.length} กลุ่ม</b></span>
+    `;
+  }
+  document.getElementById('search').placeholder=isStockTab()?'ค้นหาชื่อกองทุน / หุ้นที่ถือ (NVIDIA, Microsoft, PTT, ADVANC)':'ค้นหาชื่อกองทุน / Master Fund / หุ้นที่ถือ (NVIDIA, Microsoft, PTT, ADVANC)';
   computeScopes();computeEntities();state.groups=state.groups.filter(id=>ENTS.some(e=>e.id===id));renderTabs();renderTrend();renderCards();renderSelectionBar();renderInsight();renderQuickFilters();renderFilters();
   const list=currentFunds();
   document.getElementById('cnt').textContent=`พบ ${list.length} กองทุน`;
-  document.getElementById('tableHeading').textContent=isStockTab()?`⑤ กองทุนไทยที่${state.groups.length?'ถือหุ้นที่เลือก':'ลงทุนตรงในหุ้น'+(state.tab==='offshore'?'ต่างประเทศ':'ไทย')}`:'⑤ ตารางกองทุนที่เกี่ยวข้อง';
+  const th = document.getElementById('tableHeading');
+  if(th) th.textContent = `กองทุนที่ตรงเงื่อนไข ${list.length} กอง ⓘ`;
   renderFundTable(list);
-  const opened=list.filter(f=>state.open.has(f.id)),drawerHeading=document.getElementById('drawerHeading');drawerHeading.classList.toggle('hidden',!opened.length);drawerHeading.innerHTML=opened.length?`<div class="flex items-center gap-2"><span class="text-[11px] font-bold sub uppercase tracking-wide">⑥ รายละเอียดกองทุนที่เปิด</span><span class="num text-[9px] font-bold px-2 py-0.5 rounded-full surf brd">${opened.length} กอง</span><button onclick="closeAllFunds()" class="ml-auto text-[10px] font-bold px-2.5 py-1 rounded-lg surf brd">ปิดทั้งหมด ✕</button></div>`:'';document.getElementById('list').innerHTML=opened.map(f=>`<div id="card-${sid(f.id)}">${fundRow(f)}</div>`).join('');
+  
+  const drawerHeading=document.getElementById('drawerHeading');
+  if(drawerHeading){ drawerHeading.classList.add('hidden'); drawerHeading.innerHTML=''; }
+  const listEl=document.getElementById('list');
+  if(listEl) listEl.innerHTML='';
   document.getElementById('empty').classList.add('hidden');
-  FUNDS.filter(f=>!state.open.has(f.id)).forEach(f=>{destroyChart(sid(f.id)+'-cyr');destroyChart(sid(f.id)+'-asset');});
-  opened.forEach(f=>{buildCyr(f);buildAsset(f);});
+  
+  const opened=list.filter(f=>state.open.has(f.id));
+  FUNDS.filter(f=>!state.open.has(f.id)).forEach(f=>{destroyChart(sid(f.id)+'-cyr');destroyChart(sid(f.id)+'-asset');destroyChart(sid(f.id)+'-top5pie');});
+  opened.forEach(f=>{buildCyr(f);buildAsset(f);buildTop5Pie(f);});
   renderCompare();updateCmpBtn();updateWatchCount();
   document.getElementById('themeBtn').textContent=document.documentElement.classList.contains('dark')?'☀️':'🌙';
 }
