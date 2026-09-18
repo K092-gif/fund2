@@ -505,11 +505,25 @@ function buildThemePulseCharts(stats){
     charts[id]=new Chart(el,{type:'line',data:{labels:CMP_LABELS,datasets:[{data:s.series,borderColor:s.sparkColor,backgroundColor:grad,borderWidth:2.4,pointRadius:0,pointHoverRadius:3,tension:.34,fill:true}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}});
   });
 }
+const THEME_ACCENTS = {
+  'Gold (สินทรัพย์ปลอดภัย)': '#d97706',
+  'US Technology (NASDAQ-100)': '#2456d8',
+  'Korea Equity': '#059669',
+  'China Tech': '#0891b2',
+  'Global Healthcare': '#7a5af5'
+};
+function getThemeColor(id, index) {
+  return THEME_ACCENTS[id] || COMPARE_COLORS[index % COMPARE_COLORS.length];
+}
+
 function buildThemeDetailChart(selected){
   const id='scope-trend-chart',el=document.getElementById(id);
   if(!el)return;
   destroyChart(id);
-  const datasets=selected.map((s,i)=>({label:`${i+1}. ${s.scope.title}`,data:s.series,borderColor:COMPARE_COLORS[i],backgroundColor:COMPARE_COLORS[i],borderWidth:2.8,borderDash:COMPARE_DASH[i],pointRadius:0,pointHoverRadius:4,tension:.3,fill:false}));
+  const datasets=selected.map((s,i)=>{
+    const color = getThemeColor(s.scope.id, i);
+    return {label:`${i+1}. ${s.scope.title}`,data:s.series,borderColor:color,backgroundColor:color,borderWidth:2.8,borderDash:COMPARE_DASH[i],pointRadius:0,pointHoverRadius:4,tension:.3,fill:false};
+  });
   datasets.push({label:'MSCI ACWI · จุดอ้างอิง',data:performanceSeries(731,GLOBAL_RETURN,CMP_LABELS.length),borderColor:'#7b879d',backgroundColor:'#7b879d',borderWidth:2,borderDash:[6,4],pointRadius:0,pointHoverRadius:4,tension:.3,fill:false});
   charts[id]=new Chart(el,{type:'line',data:{labels:CMP_LABELS,datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,pointStyle:'line',boxWidth:22,font:{size:9}}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${(c.parsed.y-100).toFixed(1)}%`}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:7}},y:{ticks:{font:{size:9},callback:v=>(v-100)+'%'},grid:{color:'rgba(148,163,184,.15)'}}}}});
 }
@@ -537,7 +551,7 @@ function renderThemePulse(wrap){
             ${(state.themeView === 'all' ? stats : selected).map((s) => {
               const order = state.themeSelections.indexOf(s.scope.id);
               const isSel = order > -1;
-              const color = isSel ? COMPARE_COLORS[order % COMPARE_COLORS.length] : '';
+              const color = isSel ? getThemeColor(s.scope.id, order) : '';
               return `
                 <button
                   type="button"
@@ -579,8 +593,10 @@ function renderThemePulse(wrap){
             <small class="sub text-[11px]">เลือกจาก ธีมที่น่าจับตา หรือ เมนู Master Fund</small>
           </div>
           <div class="industry-chart-list-scroll space-y-3 overflow-y-auto max-h-[290px] pr-1">
-            ${selected.map((s, index) => `
-              <article class="p-3 rounded-xl surf2 brd hover:border-brand-300 transition" style="border-left: 4px solid ${COMPARE_COLORS[index % COMPARE_COLORS.length]};">
+            ${selected.map((s, index) => {
+              const color = getThemeColor(s.scope.id, index);
+              return `
+              <article class="p-3 rounded-xl surf2 brd hover:border-brand-300 transition" style="border-left: 4px solid ${color};">
                 <div class="flex items-center justify-between gap-1">
                   <b class="text-xs txt font-bold truncate">— ${index + 1}. ${s.scope.title}</b>
                   <small class="sub text-[10px] shrink-0">${s.fundCount} กองทุน</small>
@@ -591,7 +607,7 @@ function renderThemePulse(wrap){
                   <div><span>Fund Flow 1M</span> <strong class="num block font-bold txt">${s.flow > 0 ? '+' : ''}฿${money(s.flow)}</strong></div>
                 </div>
               </article>
-            `).join('')}
+            `}).join('')}
           </div>
         </div>
       </aside>

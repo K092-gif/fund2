@@ -33,8 +33,8 @@ let state = {
   sortBy: 'perfDesc',
   page: 1,
   pageSize: 10,
-  selectedFunds: new Set(['SCBNDQ', 'KF-GTECH']),
-  activeDrawerFundId: 'SCBNDQ',
+  selectedFunds: new Set(['KKP SEMICON-H', 'SCBSEMI(A)', 'SCBKEQTG']),
+  activeDrawerFundId: 'SCBKEQTG',
   expandedFundIds: new Set(['SCB72-GLOBAL']),
   flowPeriod: '1M'
 };
@@ -45,11 +45,17 @@ let drawerChartInstance = null;
 document.addEventListener('DOMContentLoaded', () => {
   // Check Dark Mode Preference
   try {
-    if (localStorage.getItem('ideafund-theme') === 'dark' || 
-       (!localStorage.getItem('ideafund-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const themeParam = urlParams.get('theme');
+    if (themeParam === 'dark' || (!themeParam && (localStorage.getItem('ideafund-theme') === 'dark' || 
+       (!localStorage.getItem('ideafund-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)))) {
       document.documentElement.classList.add('dark');
       const icon = document.getElementById('themeIcon');
       if (icon) icon.textContent = '☀️';
+    } else if (themeParam === 'light') {
+      document.documentElement.classList.remove('dark');
+      const icon = document.getElementById('themeIcon');
+      if (icon) icon.textContent = '🌙';
     }
   } catch (e) {}
 
@@ -66,6 +72,10 @@ document.addEventListener('DOMContentLoaded', () => {
   renderValuationTable();
   updateWatchlistBadge();
   setupGlobalSearch();
+  updateFloatingCompareDock();
+  if (state.selectedFunds && state.selectedFunds.size >= 2) {
+    renderInlineCompare();
+  }
 
   // Listen to browser back/forward hash changes
   window.addEventListener('hashchange', () => {
@@ -999,14 +1009,33 @@ function toggleWatchlistModal() {
   }
 }
 
+const COMPARE_FUND_COLORS = [
+  { border: '#2563eb', bg: 'rgba(37, 99, 235, 0.08)', lightBg: '#eff6ff', tagBg: '#dbeafe', tagText: '#1e40af' },
+  { border: '#059669', bg: 'rgba(5, 150, 105, 0.08)', lightBg: '#ecfdf5', tagBg: '#d1fae5', tagText: '#065f46' },
+  { border: '#7c3aed', bg: 'rgba(124, 58, 237, 0.08)', lightBg: '#f5f3ff', tagBg: '#ede9fe', tagText: '#5b21b6' },
+  { border: '#0284c7', bg: 'rgba(2, 132, 199, 0.08)', lightBg: '#f0f9ff', tagBg: '#e0f2fe', tagText: '#0369a1' }
+];
+
+let inlineCompareChartInstance = null;
+
 function toggleFundSelection(id, checked) {
   if (id) {
-    if (checked) state.selectedFunds.add(id);
-    else state.selectedFunds.delete(id);
+    if (checked) {
+      if (state.selectedFunds.size >= 4) {
+        alert('คุณสามารถเลือกเปรียบเทียบได้สูงสุด 4 กองทุนพร้อมกัน');
+        renderFundTable();
+        return;
+      }
+      state.selectedFunds.add(id);
+    } else {
+      state.selectedFunds.delete(id);
+    }
   }
 
   const badge = document.getElementById('compareCount');
   if (badge) badge.textContent = state.selectedFunds.size;
+
+  updateFloatingCompareDock();
 
   // Auto-refresh comparison table if it is currently open
   const container = document.getElementById('inlineCompareContainer');
@@ -1019,12 +1048,46 @@ function toggleFundSelection(id, checked) {
   }
 }
 
+function updateFloatingCompareDock() {
+  const dock = document.getElementById('floatingCompareDock');
+  const countEl = document.getElementById('dockSelectedCount');
+  const chipsContainer = document.getElementById('dockChipsContainer');
+  if (!dock) return;
+
+  const count = state.selectedFunds.size;
+  if (count === 0) {
+    dock.classList.add('hidden');
+    return;
+  }
+
+  dock.classList.remove('hidden');
+  if (countEl) countEl.textContent = count;
+
+  if (chipsContainer) {
+    const funds = Array.from(state.selectedFunds)
+      .map(id => (typeof FUNDS !== 'undefined' ? FUNDS.find(f => f.id === id) : null))
+      .filter(Boolean);
+
+    chipsContainer.innerHTML = funds.map((f, idx) => {
+      const color = (COMPARE_FUND_COLORS[idx % COMPARE_FUND_COLORS.length] || COMPARE_FUND_COLORS[0]).border;
+      return `
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 text-white text-xs border border-slate-700 font-bold shrink-0 shadow-xs">
+          <span class="w-2 h-2 rounded-full shrink-0" style="background: ${color}"></span>
+          <span class="truncate max-w-[120px]">${f.id}</span>
+          <button type="button" onclick="event.stopPropagation(); removeFundFromCompare('${f.id}')" class="text-slate-400 hover:text-rose-400 ml-0.5 p-0.5" title="นำ ${f.id} ออก">✕</button>
+        </span>
+      `;
+    }).join('');
+  }
+}
+
 function toggleSelectAllFunds(checked) {
   const filtered = getFilteredFunds();
-  filtered.forEach(f => {
-    if (checked) state.selectedFunds.add(f.id);
-    else state.selectedFunds.delete(f.id);
-  });
+  if (checked) {
+    filtered.slice(0, 4).forEach(f => state.selectedFunds.add(f.id));
+  } else {
+    state.selectedFunds.clear();
+  }
   renderFundTable();
   toggleFundSelection('', false);
 }
@@ -1032,20 +1095,92 @@ function toggleSelectAllFunds(checked) {
 function openCompareModal() {
   let fundsToCompare = Array.from(state.selectedFunds);
   
-  // If no funds selected yet, select 2 default funds to immediately demonstrate the feature
+  // If no funds selected yet, pick preferred funds or first funds
   if (fundsToCompare.length === 0) {
-    const filtered = getFilteredFunds();
-    if (filtered.length >= 2) {
-      fundsToCompare = [filtered[0].id, filtered[1].id];
-      state.selectedFunds.add(filtered[0].id);
-      state.selectedFunds.add(filtered[1].id);
-      const badge = document.getElementById('compareCount');
-      if (badge) badge.textContent = state.selectedFunds.size;
-      renderFundTable();
+    const preferred = ['KKP SEMICON-H', 'SCBSEMI(A)', 'SCBKEQTG'];
+    const found = preferred.filter(id => (typeof FUNDS !== 'undefined' && FUNDS.some(f => f.id === id)));
+    if (found.length >= 2) {
+      fundsToCompare = found;
+    } else {
+      const filtered = getFilteredFunds();
+      fundsToCompare = filtered.slice(0, 3).map(f => f.id);
     }
+    fundsToCompare.forEach(id => state.selectedFunds.add(id));
+    const badge = document.getElementById('compareCount');
+    if (badge) badge.textContent = state.selectedFunds.size;
+    renderFundTable();
+    updateFloatingCompareDock();
   }
 
   renderInlineCompare(fundsToCompare);
+}
+
+function calculateCompositeRanking(funds) {
+  if (!funds || funds.length === 0) return { winnerId: null, details: {} };
+  if (funds.length === 1) {
+    const f = funds[0];
+    return {
+      winnerId: f.id,
+      details: {
+        [f.id]: {
+          rank: 1,
+          strengths: ['กองทุนที่เลือก'],
+          isWinner: true
+        }
+      }
+    };
+  }
+
+  // Safely obtain min and max for normalization
+  const getBounds = (extractor) => {
+    const vals = funds.map(extractor);
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    return { min, max, diff: (max - min) === 0 ? 1 : (max - min) };
+  };
+
+  const perf1yStats = getBounds(f => Number(f.perf || 0));
+  const perf3yStats = getBounds(f => Number(f.ret3y || 0));
+  const aumStats = getBounds(f => Number(f.aum || 0));
+  const navStats = getBounds(f => Number(f.nav || 0));
+
+  const scoredList = funds.map(f => {
+    const s1y = ((Number(f.perf || 0) - perf1yStats.min) / perf1yStats.diff) * 100;
+    const s3y = ((Number(f.ret3y || 0) - perf3yStats.min) / perf3yStats.diff) * 100;
+    const sAum = ((Number(f.aum || 0) - aumStats.min) / aumStats.diff) * 100;
+    const sNav = ((Number(f.nav || 0) - navStats.min) / navStats.diff) * 100;
+
+    // Multi-metric composite formula:
+    // Returns (1Y: 35% + 3Y: 20% = 55%) + AUM (25%) + NAV (20%)
+    const rawTotal = (s1y * 0.35) + (s3y * 0.20) + (sAum * 0.25) + (sNav * 0.20);
+
+    const strengths = [];
+    if (f.perf === perf1yStats.max && perf1yStats.diff > 0) strengths.push('ผลตอบแทน 1Y สูงสุด');
+    if (f.ret3y === perf3yStats.max && perf3yStats.diff > 0) strengths.push('ผลตอบแทน 3Y แข็งแกร่ง');
+    if (f.aum === aumStats.max && aumStats.diff > 0) strengths.push('AUM ขนาดใหญ่สุด');
+    if (f.nav === navStats.max && navStats.diff > 0) strengths.push('NAV สะสมสูงสุด');
+
+    return {
+      id: f.id,
+      rawScore: rawTotal,
+      strengths: strengths.length > 0 ? strengths : ['ภาพรวมสมดุล']
+    };
+  });
+
+  // Sort descending by raw score to determine #1 winner only (no score exposed)
+  scoredList.sort((a, b) => b.rawScore - a.rawScore);
+  const winnerId = scoredList[0].id;
+
+  const details = {};
+  scoredList.forEach((item, index) => {
+    details[item.id] = {
+      rank: index + 1,
+      strengths: item.strengths,
+      isWinner: item.id === winnerId
+    };
+  });
+
+  return { winnerId, details };
 }
 
 function renderInlineCompare(fundIds) {
@@ -1053,7 +1188,7 @@ function renderInlineCompare(fundIds) {
   const content = document.getElementById('inlineCompareContent');
   if (!container || !content) return;
 
-  const targetIds = fundIds || Array.from(state.selectedFunds);
+  const targetIds = (fundIds || Array.from(state.selectedFunds)).slice(0, 4);
   if (targetIds.length === 0) {
     container.classList.add('hidden');
     return;
@@ -1063,270 +1198,596 @@ function renderInlineCompare(fundIds) {
   const funds = targetIds.map(id => (typeof FUNDS !== 'undefined' ? FUNDS.find(f => f.id === id) : null)).filter(Boolean);
   if (funds.length === 0) return;
 
-  // Build Side-by-Side Comparison Table matching media_1788422961459.png
-  let html = `
-    <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse border border-slate-200/90 dark:border-slate-800 rounded-xl overflow-hidden">
-        <thead>
-          <tr class="border-b border-slate-200/90 dark:border-slate-800">
-            <th class="p-4 sm:p-5 w-48 sm:w-60 bg-slate-50/90 dark:bg-slate-850/80 text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-              หัวข้อเปรียบเทียบ
-            </th>
-            ${funds.map(f => `
-              <th class="p-4 sm:p-5 bg-blue-50/40 dark:bg-blue-950/20 border-l border-slate-200/80 dark:border-slate-800 min-w-[240px] relative group/col">
-                <div class="flex items-start justify-between gap-2">
-                  <div class="min-w-0 pr-1">
-                    <div class="font-black text-blue-600 dark:text-blue-400 text-base sm:text-lg mb-0.5">${f.id}</div>
-                    <div class="text-xs font-normal text-slate-600 dark:text-slate-300 leading-snug line-clamp-2">${f.name}</div>
-                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">${f.amcFull || f.amc}</div>
-                  </div>
-                  <!-- ปุ่มลบกองทุนออกจากเปรียบเทียบ -->
-                  <button 
-                    type="button" 
-                    onclick="removeFundFromCompare('${f.id}')" 
-                    class="shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-100/80 dark:hover:bg-rose-950/60 transition border border-transparent hover:border-rose-200/80 dark:hover:border-rose-800" 
-                    title="ลบ ${f.id} ออกจากการเปรียบเทียบ"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                  </button>
-                </div>
-              </th>
-            `).join('')}
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs sm:text-sm">
-          <!-- Row 1: Market / Type -->
-          <tr>
-            <td class="p-3.5 sm:p-4 font-bold text-slate-700 dark:text-slate-200 bg-slate-50/50 dark:bg-slate-850/40">
-              ประเภท / ตลาด
-            </td>
-            ${funds.map(f => `
-              <td class="p-3.5 sm:p-4 border-l border-slate-100 dark:border-slate-800">
-                ${f.type === 'thai' ? `
-                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/60">
-                    <span class="text-[10px] bg-emerald-200 dark:bg-emerald-800 px-1 rounded font-bold">TH</span> ไทย
-                  </span>
-                ` : `
-                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200/70 dark:border-blue-800/60">
-                    <span>🌐</span> ต่างประเทศ
-                  </span>
-                `}
-              </td>
-            `).join('')}
-          </tr>
+  // Update header badge
+  const headerBadge = document.getElementById('compareHeaderBadge');
+  if (headerBadge) headerBadge.textContent = `${funds.length}/4 กองทุน`;
 
-          <!-- Row 2: Risk Level -->
-          <tr>
-            <td class="p-3.5 sm:p-4 font-bold text-slate-700 dark:text-slate-200 bg-slate-50/50 dark:bg-slate-850/40">
-              ระดับความเสี่ยง (Risk)
-            </td>
-            ${funds.map(f => `
-              <td class="p-3.5 sm:p-4 border-l border-slate-100 dark:border-slate-800">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500 text-white shadow-xs">
-                  <span class="text-[10px] opacity-80">Risk</span> ${f.risk}
+  // Multi-metric composite evaluation (Returns 1Y+3Y, AUM, NAV)
+  const { winnerId, details } = calculateCompositeRanking(funds);
+
+  const typeMap = {
+    feeder: 'Feeder',
+    offshore: 'Offshore',
+    thai: 'Thai Equity',
+    mixed: 'Mixed'
+  };
+
+  const pastelCols = ['compare-col-0', 'compare-col-1', 'compare-col-2', 'compare-col-3'];
+
+  // Check if all compared funds share the same category
+  const allSameType = funds.length > 1 && funds.every(f => (f.type || 'feeder') === (funds[0].type || 'feeder'));
+
+  // 1. CARDS HTML (Top summary cards with prominent #1 Winner highlight, NO score numbers, button linking to fund page)
+  const cardsHtml = `
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${Math.min(funds.length, 4)} gap-4 sm:gap-5 mb-8">
+      ${funds.map((f, idx) => {
+        const color = COMPARE_FUND_COLORS[idx % COMPARE_FUND_COLORS.length];
+        const fundInfo = details[f.id] || { rank: 1, strengths: [], isWinner: false };
+        const isWinner = fundInfo.isWinner && funds.length > 1;
+        const perfVal = Number(f.perf || 0);
+        const isPos = perfVal >= 0;
+        const formattedPerf = (isPos ? '+' : '') + perfVal.toFixed(2) + '%';
+        const typeLabel = typeMap[f.type] || f.type || 'Feeder';
+
+        return `
+          <div class="relative bg-white dark:bg-slate-850 rounded-2xl ${isWinner ? 'border-2 border-amber-400 dark:border-amber-400 shadow-xl ring-4 ring-amber-400/20 dark:ring-amber-500/25 winner-glow bg-amber-50/20 dark:bg-amber-950/20' : 'border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-md'} transition-all flex flex-col justify-between">
+            <!-- Top champion gold banner for #1 winner (No score, clean with positioned tooltip) -->
+            ${isWinner ? `
+              <div class="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs py-2 px-3.5 rounded-t-[14px] flex items-center justify-between shadow-xs">
+                <span class="flex items-center gap-1.5 tracking-wide">
+                  <span class="text-sm">🏆</span>
+                  <span>อันดับ 1 ชนะรอบด้าน</span>
                 </span>
-              </td>
-            `).join('')}
-          </tr>
+                <div class="card-tooltip">
+                  <button type="button" onclick="event.stopPropagation(); this.closest('.card-tooltip').classList.toggle('is-active')" class="cursor-pointer inline-flex items-center gap-1 text-[10px] bg-slate-950/90 hover:bg-slate-950 text-amber-300 px-2.5 py-1 rounded-full font-bold shadow-xs transition" title="คลิกหรือชี้เพื่อดูเกณฑ์การวิเคราะห์">
+                    <span>เกณฑ์วิเคราะห์</span> <span class="text-[11px]">ⓘ</span>
+                  </button>
+                  <div class="tooltip-content">
+                    <div class="font-black text-amber-400 text-xs mb-1.5 pb-1 border-b border-slate-700/80 flex items-center gap-1.5">
+                      <span>📊</span>
+                      <span>เกณฑ์การจัดอันดับรอบด้าน</span>
+                    </div>
+                    <div class="text-slate-200 space-y-1.5 text-[11px] leading-relaxed">
+                      <div>• <strong class="text-amber-300">ผลตอบแทน:</strong> พิจารณาทั้งช่วง 1Y และ 3Y</div>
+                      <div>• <strong class="text-amber-300">ขนาดกองทุน (AUM):</strong> ความน่าเชื่อถือและสภาพคล่อง</div>
+                      <div>• <strong class="text-amber-300">มูลค่าสะสม (NAV):</strong> การเติบโตต่อเนื่องของสินทรัพย์</div>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-slate-700/80 text-[10px] text-amber-300 font-semibold flex items-center gap-1">
+                      <span>✨</span>
+                      <span class="truncate">จุดเด่น: ${fundInfo.strengths.join(' • ')}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ` : `
+              <!-- Color accent bar for non-winner -->
+              <div class="h-1.5 w-full rounded-t-[14px]" style="background: ${color.border}"></div>
+            `}
 
-          <!-- Row 3: 1Y Performance -->
-          <tr>
-            <td class="p-3.5 sm:p-4 font-bold text-slate-700 dark:text-slate-200 bg-slate-50/50 dark:bg-slate-850/40">
-              ผลตอบแทน 1 ปี (1Y)
-            </td>
-            ${funds.map(f => `
-              <td class="p-3.5 sm:p-4 border-l border-slate-100 dark:border-slate-800 font-black text-base ${f.perf >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'} num">
-                ${f.perf >= 0 ? '+' : ''}${f.perf}%
-              </td>
-            `).join('')}
-          </tr>
+            <div class="p-5">
+              <!-- Header & Winner badge (NO CROWN ICON) -->
+              <div class="flex items-start justify-between gap-2 mb-2">
+                <h4 class="text-base sm:text-lg font-black tracking-tight" style="color: ${isWinner ? '#d97706' : color.border}">
+                  ${f.id}
+                </h4>
+                ${isWinner ? `
+                  <span class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-950 shadow-xs flex items-center gap-1 shrink-0">
+                    อันดับ 1
+                  </span>
+                ` : ''}
+              </div>
 
-          <!-- Row 4: NAV -->
-          <tr>
-            <td class="p-3.5 sm:p-4 font-bold text-slate-700 dark:text-slate-200 bg-slate-50/50 dark:bg-slate-850/40">
-              มูลค่า NAV ต่อหน่วย
-            </td>
-            ${funds.map(f => `
-              <td class="p-3.5 sm:p-4 border-l border-slate-100 dark:border-slate-800 font-extrabold text-slate-900 dark:text-white num">
-                ฿${f.nav.toFixed(4)}
-              </td>
-            `).join('')}
-          </tr>
-
-          <!-- Row 5: AUM -->
-          <tr>
-            <td class="p-3.5 sm:p-4 font-bold text-slate-700 dark:text-slate-200 bg-slate-50/50 dark:bg-slate-850/40">
-              ขนาดกองทุน (AUM)
-            </td>
-            ${funds.map(f => `
-              <td class="p-3.5 sm:p-4 border-l border-slate-100 dark:border-slate-800 font-bold text-slate-800 dark:text-slate-200 num">
-                ฿${f.aum ? (f.aum >= 1000 ? (f.aum/1000).toFixed(1) + 'K ล้าน' : f.aum + 'M') : '฿44K'}
-              </td>
-            `).join('')}
-          </tr>
-
-          <!-- Row 6: AMC -->
-          <tr>
-            <td class="p-3.5 sm:p-4 font-bold text-slate-700 dark:text-slate-200 bg-slate-50/50 dark:bg-slate-850/40">
-              บลจ. (AMC)
-            </td>
-            ${funds.map(f => `
-              <td class="p-3.5 sm:p-4 border-l border-slate-100 dark:border-slate-800 font-semibold text-slate-700 dark:text-slate-300">
+              <!-- Fund Name & AMC -->
+              <div class="text-xs text-slate-700 dark:text-slate-300 font-semibold line-clamp-2 min-h-[32px] mb-1">
+                ${f.name}
+              </div>
+              <div class="text-[11px] font-bold text-slate-400 dark:text-slate-400 mb-3">
                 ${f.amcFull || f.amc}
-              </td>
-            `).join('')}
-          </tr>
+              </div>
 
-          <!-- Row 7: Sector / หมวดหมู่ -->
-          <tr>
-            <td class="p-3.5 sm:p-4 font-bold text-slate-700 dark:text-slate-200 bg-slate-50/50 dark:bg-slate-850/40">
-              Sector / หมวดหมู่
-            </td>
-            ${funds.map(f => `
-              <td class="p-3.5 sm:p-4 border-l border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-300">
-                ${f.type === 'feeder' ? 'Global Equity' : f.type === 'thai' ? 'Thai Equity' : f.type === 'mixed' ? 'Multi-Asset' : 'Fixed Income / Offshore'}
-              </td>
-            `).join('')}
-          </tr>
+              <!-- Multi-metric Advantages Pill for Winner -->
+              ${isWinner ? `
+                <div class="mb-3 text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-950/60 border border-amber-300/80 dark:border-amber-800/60 px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-2xs">
+                  <span>✨</span>
+                  <span class="truncate">จุดเด่น: ${fundInfo.strengths.join(' • ')}</span>
+                </div>
+              ` : ''}
 
-          <!-- Row 8: Method / Strategy -->
-          <tr>
-            <td class="p-3.5 sm:p-4 font-bold text-slate-700 dark:text-slate-200 bg-slate-50/50 dark:bg-slate-850/40">
-              กลยุทธ์ (Method)
-            </td>
-            ${funds.map(f => `
-              <td class="p-3.5 sm:p-4 border-l border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                ${f.master || 'Active Management'}
-              </td>
-            `).join('')}
-          </tr>
+              <!-- Hero 1Y Return Box -->
+              <div class="${isPos ? 'bg-emerald-50/90 dark:bg-emerald-950/50 border-emerald-200/90 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50/90 dark:bg-rose-950/50 border-rose-200/90 dark:border-rose-800/60 text-rose-600 dark:text-rose-400'} border rounded-xl py-3 px-4 text-center my-3 transition">
+                <div class="text-[11px] font-bold opacity-80 mb-0.5">ผลตอบแทน 1Y</div>
+                <div class="text-2xl sm:text-3xl font-black num tracking-tight">${formattedPerf}</div>
+              </div>
 
-          <!-- Row 9: Actions -->
-          <tr>
-            <td class="p-3.5 sm:p-4 font-bold text-slate-700 dark:text-slate-200 bg-slate-50/50 dark:bg-slate-850/40">
-              การดำเนินการ
-            </td>
-            ${funds.map(f => `
-              <td class="p-3.5 sm:p-4 border-l border-slate-100 dark:border-slate-800">
-                <a href="fund_detail.html?id=${f.id}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-xs transition">
-                  <span>เปิดหน้ารายละเอียด</span> ↗
-                </a>
-              </td>
-            `).join('')}
-          </tr>
-        </tbody>
-      </table>
+              <!-- Badges (Risk & Type) -->
+              <div class="flex items-center gap-2 flex-wrap my-3">
+                <span class="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/50">
+                  ระดับ ${f.risk}
+                </span>
+                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-900/50">
+                  ${typeLabel}
+                </span>
+              </div>
+            </div>
+
+            <!-- Card Action Footer (เปลี่ยนปุ่มเป็น รายละเอียดเพิ่มเติม ↗) -->
+            <div class="p-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between mt-auto bg-slate-50/30 dark:bg-slate-900/30 rounded-b-[14px]">
+              <a href="fund_detail.html?id=${f.id}" class="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 flex items-center gap-1.5 transition hover:underline">
+                <span>รายละเอียดเพิ่มเติม</span> ↗
+              </a>
+              <button type="button" onclick="removeFundFromCompare('${f.id}')" class="text-xs font-semibold text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 flex items-center gap-1 transition">
+                ✕ ลบออก
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('')}
     </div>
   `;
 
-  content.innerHTML = html;
+  // 2. HISTORICAL RETURN CHART HTML (Hero return chart, NO RISK CHART!)
+  const chartHtml = `
+    <div class="bg-white dark:bg-slate-850 rounded-2xl p-5 sm:p-6 border border-slate-200/90 dark:border-slate-800 shadow-xs mb-8">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-100 dark:border-slate-800">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-lg">📈</span>
+            <h4 class="font-black text-sm sm:text-base text-slate-900 dark:text-white">กราฟเส้นเปรียบเทียบผลตอบแทนย้อนหลัง (%)</h4>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">แนวโน้มผลตอบแทนช่วง 1 วัน (1D), 1 เดือน (1M), 1 ปี (1Y), และ 3 ปี (3Y)</p>
+        </div>
+        <!-- Legend Chips for Gen Y -->
+        <div class="flex flex-wrap items-center gap-2">
+          ${funds.map((f, idx) => {
+            const color = COMPARE_FUND_COLORS[idx % COMPARE_FUND_COLORS.length];
+            const isWinner = f.id === winnerId && funds.length > 1;
+            return `
+              <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-extrabold ${isWinner ? 'bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-slate-900 dark:text-amber-200 shadow-2xs' : 'bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-slate-800 dark:text-slate-200'}">
+                <span class="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style="background: ${isWinner ? '#f59e0b' : color.border}"></span>
+                <span>${f.id}</span>
+                <span class="text-[11px] ${f.perf >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'} num">
+                  ${f.perf >= 0 ? '+' : ''}${Number(f.perf || 0).toFixed(1)}%
+                </span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Chart Canvas Container -->
+      <div class="relative w-full h-[320px] sm:h-[360px]">
+        <canvas id="inlineCompareChartCanvas"></canvas>
+      </div>
+    </div>
+  `;
+
+  // 3. COMPARISON MATRIX TABLE HTML (No score row, no tooltips in table, fixed pastel colors, more details button)
+  const max1Y = Math.max(1, ...funds.map(f => Math.abs(Number(f.perf || 0))));
+  const tableHtml = `
+    <div class="bg-white dark:bg-slate-850 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden">
+      <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <h4 class="font-black text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📋</span>
+          <span>ตารางข้อมูลเปรียบเทียบทุกมิติ (Comparison Matrix)</span>
+        </h4>
+        <span class="text-xs text-slate-400 font-medium">เปรียบเทียบแบบคู่ขนาน</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs sm:text-sm border-collapse">
+          <thead>
+            <tr class="border-b border-slate-200/90 dark:border-slate-800">
+              <th class="p-4 sm:p-5 w-52 sm:w-64 font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider text-xs bg-slate-100/70 dark:bg-slate-900/90">
+                หัวข้อเปรียบเทียบ
+              </th>
+              ${funds.map((f, idx) => {
+                const color = COMPARE_FUND_COLORS[idx % COMPARE_FUND_COLORS.length];
+                const fundInfo = details[f.id] || { rank: 1, strengths: [], isWinner: false };
+                const isWinner = f.id === winnerId && funds.length > 1;
+                const colTint = isWinner ? 'compare-col-winner' : pastelCols[idx % pastelCols.length];
+
+                return `
+                  <th class="p-4 sm:p-5 border-l border-slate-200/80 dark:border-slate-800 min-w-[220px] ${colTint} ${isWinner ? 'border-t-4 border-t-amber-400 dark:border-t-amber-500' : ''}">
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                      <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full shrink-0 shadow-xs" style="background: ${isWinner ? '#f59e0b' : color.border}"></span>
+                        <span class="font-black text-base" style="color: ${isWinner ? '#d97706' : color.border}">${f.id}</span>
+                      </div>
+                      ${isWinner ? `
+                        <span class="px-2.5 py-1 rounded-full text-[11px] font-black bg-amber-400 text-slate-950 shadow-xs whitespace-nowrap">
+                          อันดับ 1 ชนะรอบด้าน
+                        </span>
+                      ` : ''}
+                    </div>
+                  </th>
+                `;
+              }).join('')}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs sm:text-sm">
+            <!-- Row 1: ประเภท / ตลาด (Merged with colspan if all funds share identical type) -->
+            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+              <td class="p-4 font-bold text-slate-700 dark:text-slate-300 bg-slate-50/70 dark:bg-slate-900/60">
+                ประเภท / ตลาด
+              </td>
+              ${allSameType ? `
+                <td colspan="${funds.length}" class="p-4 border-l border-slate-100 dark:border-slate-800 text-center bg-slate-50/40 dark:bg-slate-900/30">
+                  <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-black bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/50 shadow-2xs">
+                    <span>🏷️</span> ทุกกองทุนที่เลือกเป็นประเภทเดียวกัน: <strong>${typeMap[funds[0].type] || funds[0].type || 'Feeder Fund'}</strong>
+                  </span>
+                </td>
+              ` : funds.map((f, idx) => {
+                const typeLabel = typeMap[f.type] || f.type || 'Feeder';
+                const isWinner = f.id === winnerId && funds.length > 1;
+                const colTint = isWinner ? 'compare-col-winner' : pastelCols[idx % pastelCols.length];
+                return `
+                  <td class="p-4 border-l border-slate-100 dark:border-slate-800 ${colTint}">
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-400 border border-amber-200/80 dark:border-amber-900/50">
+                      ${typeLabel}
+                    </span>
+                  </td>
+                `;
+              }).join('')}
+            </tr>
+
+            <!-- Row 2: ระดับความเสี่ยง -->
+            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+              <td class="p-4 font-bold text-slate-700 dark:text-slate-300 bg-slate-50/70 dark:bg-slate-900/60">
+                ระดับความเสี่ยง
+              </td>
+              ${funds.map((f, idx) => {
+                const isWinner = f.id === winnerId && funds.length > 1;
+                const colTint = isWinner ? 'compare-col-winner' : pastelCols[idx % pastelCols.length];
+                return `
+                  <td class="p-4 border-l border-slate-100 dark:border-slate-800 ${colTint}">
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/50">
+                      ระดับ ${f.risk}
+                    </span>
+                  </td>
+                `;
+              }).join('')}
+            </tr>
+
+            <!-- Row 3: ผลตอบแทน 1 ปี (1Y) พร้อมแถบสัดส่วน -->
+            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition bg-blue-50/20 dark:bg-blue-950/10">
+              <td class="p-4 font-bold text-slate-800 dark:text-slate-200 bg-slate-50/70 dark:bg-slate-900/60">
+                <div>ผลตอบแทน 1 ปี (1Y)</div>
+                <div class="text-[11px] text-slate-400 font-normal">เปรียบเทียบสัดส่วน</div>
+              </td>
+              ${funds.map((f, idx) => {
+                const color = COMPARE_FUND_COLORS[idx % COMPARE_FUND_COLORS.length];
+                const isWinner = f.id === winnerId && funds.length > 1;
+                const colTint = isWinner ? 'compare-col-winner' : pastelCols[idx % pastelCols.length];
+                const perfVal = Number(f.perf || 0);
+                const relPct = Math.max(12, Math.min(100, Math.round((Math.abs(perfVal) / max1Y) * 100)));
+                return `
+                  <td class="p-4 border-l border-slate-100 dark:border-slate-800 ${colTint}">
+                    <div class="flex items-center gap-1.5 font-black text-base sm:text-lg ${perfVal >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'} num">
+                      <span>${perfVal >= 0 ? '+' : ''}${perfVal.toFixed(2)}%</span>
+                    </div>
+                    <!-- Horizontal comparison bar -->
+                    <div class="w-full max-w-[160px] bg-slate-200/80 dark:bg-slate-700 rounded-full h-1.5 mt-2 overflow-hidden">
+                      <div class="h-full rounded-full transition-all duration-500" style="width: ${relPct}%; background: ${isWinner ? '#f59e0b' : color.border}"></div>
+                    </div>
+                  </td>
+                `;
+              }).join('')}
+            </tr>
+
+            <!-- Row 4: ผลตอบแทน 1 เดือน (1M) -->
+            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+              <td class="p-4 font-bold text-slate-700 dark:text-slate-300 bg-slate-50/70 dark:bg-slate-900/60">
+                ผลตอบแทน 1 เดือน (1M)
+              </td>
+              ${funds.map((f, idx) => {
+                const val = Number(f.ret1m || 0);
+                const isWinner = f.id === winnerId && funds.length > 1;
+                const colTint = isWinner ? 'compare-col-winner' : pastelCols[idx % pastelCols.length];
+                return `
+                  <td class="p-4 border-l border-slate-100 dark:border-slate-800 font-bold ${val >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'} num ${colTint}">
+                    ${val >= 0 ? '+' : ''}${val.toFixed(2)}%
+                  </td>
+                `;
+              }).join('')}
+            </tr>
+
+            <!-- Row 5: ผลตอบแทน 3 ปี (3Y) -->
+            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+              <td class="p-4 font-bold text-slate-700 dark:text-slate-300 bg-slate-50/70 dark:bg-slate-900/60">
+                ผลตอบแทน 3 ปี (3Y)
+              </td>
+              ${funds.map((f, idx) => {
+                const val = Number(f.ret3y || 0);
+                const isWinner = f.id === winnerId && funds.length > 1;
+                const colTint = isWinner ? 'compare-col-winner' : pastelCols[idx % pastelCols.length];
+                return `
+                  <td class="p-4 border-l border-slate-100 dark:border-slate-800 font-bold ${val >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'} num ${colTint}">
+                    ${val >= 0 ? '+' : ''}${val.toFixed(2)}%
+                  </td>
+                `;
+              }).join('')}
+            </tr>
+
+            <!-- Row 6: NAV ล่าสุด (บาท) - NO ฿ icon in content -->
+            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+              <td class="p-4 font-bold text-slate-700 dark:text-slate-300 bg-slate-50/70 dark:bg-slate-900/60">
+                NAV ล่าสุด (บาท)
+              </td>
+              ${funds.map((f, idx) => {
+                const isWinner = f.id === winnerId && funds.length > 1;
+                const colTint = isWinner ? 'compare-col-winner' : pastelCols[idx % pastelCols.length];
+                return `
+                  <td class="p-4 border-l border-slate-100 dark:border-slate-800 font-extrabold text-slate-900 dark:text-white num text-sm sm:text-base ${colTint}">
+                    ${Number(f.nav || 0).toFixed(4)}
+                  </td>
+                `;
+              }).join('')}
+            </tr>
+
+            <!-- Row 7: ขนาดกองทุน AUM (ล้านบาท) - NO ฿ icon in content -->
+            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+              <td class="p-4 font-bold text-slate-700 dark:text-slate-300 bg-slate-50/70 dark:bg-slate-900/60">
+                ขนาดกองทุน AUM (ล้านบาท)
+              </td>
+              ${funds.map((f, idx) => {
+                const aumVal = Number(f.aum || 0);
+                const isWinner = f.id === winnerId && funds.length > 1;
+                const colTint = isWinner ? 'compare-col-winner' : pastelCols[idx % pastelCols.length];
+                return `
+                  <td class="p-4 border-l border-slate-100 dark:border-slate-800 font-extrabold text-slate-900 dark:text-white num text-sm sm:text-base ${colTint}">
+                    ${aumVal.toLocaleString()}
+                  </td>
+                `;
+              }).join('')}
+            </tr>
+
+            <!-- Row 8: เงินปันผล -->
+            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+              <td class="p-4 font-bold text-slate-700 dark:text-slate-300 bg-slate-50/70 dark:bg-slate-900/60">
+                เงินปันผล
+              </td>
+              ${funds.map((f, idx) => {
+                const isWinner = f.id === winnerId && funds.length > 1;
+                const colTint = isWinner ? 'compare-col-winner' : pastelCols[idx % pastelCols.length];
+                return `
+                  <td class="p-4 border-l border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-medium ${colTint}">
+                    ${f.div && f.div > 0 ? `<span class="text-emerald-600 dark:text-emerald-400 font-bold">${Number(f.div).toFixed(1)}% ต่อปี</span>` : 'ไม่จ่าย'}
+                  </td>
+                `;
+              }).join('')}
+            </tr>
+
+            <!-- Row 9: บลจ. ผู้บริหารกองทุน -->
+            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+              <td class="p-4 font-bold text-slate-700 dark:text-slate-300 bg-slate-50/70 dark:bg-slate-900/60">
+                บลจ. ผู้บริหารกองทุน
+              </td>
+              ${funds.map((f, idx) => {
+                const isWinner = f.id === winnerId && funds.length > 1;
+                const colTint = isWinner ? 'compare-col-winner' : pastelCols[idx % pastelCols.length];
+                return `
+                  <td class="p-4 border-l border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold ${colTint}">
+                    ${f.amcFull || f.amc}
+                  </td>
+                `;
+              }).join('')}
+            </tr>
+
+            <!-- Row 10: การดำเนินการ (ปุ่ม รายละเอียดเพิ่มเติม ↗ ไปหน้ากองทุน) -->
+            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition bg-slate-50/30 dark:bg-slate-800/30">
+              <td class="p-4 font-bold text-slate-700 dark:text-slate-300 bg-slate-50/70 dark:bg-slate-900/60">
+                การดำเนินการ
+              </td>
+              ${funds.map((f, idx) => {
+                const isWinner = f.id === winnerId && funds.length > 1;
+                const colTint = isWinner ? 'compare-col-winner' : pastelCols[idx % pastelCols.length];
+                return `
+                  <td class="p-4 border-l border-slate-100 dark:border-slate-800 ${colTint}">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <a href="fund_detail.html?id=${f.id}" class="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold transition text-xs inline-flex items-center gap-1.5 shadow-xs hover:shadow-md">
+                        <span>รายละเอียดเพิ่มเติม</span> ↗
+                      </a>
+                    </div>
+                  </td>
+                `;
+              }).join('')}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  content.innerHTML = cardsHtml + chartHtml + tableHtml;
   container.classList.remove('hidden');
+
+  // Reset collapse state to expanded when rendered
+  if (content.classList.contains('hidden')) {
+    content.classList.remove('hidden');
+  }
+  const collapseIcon = document.getElementById('compareCollapseIcon');
+  const collapseText = document.getElementById('compareCollapseText');
+  if (collapseIcon) collapseIcon.textContent = '🔼';
+  if (collapseText) collapseText.textContent = 'ย่อส่วนนี้';
+
+  // Render the modern Chart.js line graph
+  renderInlineCompareChart(funds);
+
+  // Smooth scroll into view
   container.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function closeInlineCompare() {
-  const container = document.getElementById('inlineCompareContainer');
-  if (container) container.classList.add('hidden');
-  const menu = document.getElementById('compareDropdownMenu');
-  if (menu) menu.classList.add('hidden');
+function renderInlineCompareChart(funds) {
+  const canvas = document.getElementById('inlineCompareChartCanvas');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  if (inlineCompareChartInstance) {
+    inlineCompareChartInstance.destroy();
+    inlineCompareChartInstance = null;
+  }
+
+  const ctx = canvas.getContext('2d');
+  const isDark = document.documentElement.classList.contains('dark');
+
+  const labels = ['1 วัน (1D)', '1 เดือน (1M)', '1 ปี (1Y)', '3 ปี (3Y)'];
+
+  const datasets = funds.map((f, idx) => {
+    const color = COMPARE_FUND_COLORS[idx % COMPARE_FUND_COLORS.length];
+    
+    // Create subtle vertical gradient fill for modern Gen Y feel
+    const gradient = ctx.createLinearGradient(0, 0, 0, 320);
+    gradient.addColorStop(0, color.bg.replace('0.08', '0.22'));
+    gradient.addColorStop(1, color.bg.replace('0.08', '0.0'));
+
+    return {
+      label: f.id,
+      data: [
+        Number(f.chg1d || 0),
+        Number(f.ret1m || 0),
+        Number(f.perf || 0),
+        Number(f.ret3y || 0)
+      ],
+      borderColor: color.border,
+      backgroundColor: gradient,
+      fill: true,
+      tension: 0.38,
+      borderWidth: 3,
+      pointRadius: 6,
+      pointHoverRadius: 9,
+      pointBackgroundColor: color.border,
+      pointBorderColor: '#ffffff',
+      pointBorderWidth: 2.5,
+    };
+  });
+
+  inlineCompareChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        legend: {
+          display: false, // Handled by our custom Gen-Y legend chips
+        },
+        tooltip: {
+          backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(15, 23, 42, 0.92)',
+          titleFont: { size: 13, weight: 'bold', family: "'Prompt', 'Inter', sans-serif" },
+          bodyFont: { size: 12, weight: 'bold', family: "'Prompt', 'Inter', sans-serif" },
+          padding: 12,
+          cornerRadius: 12,
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)',
+          borderWidth: 1,
+          boxPadding: 6,
+          usePointStyle: true,
+          callbacks: {
+            label: (item) => {
+              const val = Number(item.raw || 0);
+              const sign = val >= 0 ? '+' : '';
+              return ` ${item.dataset.label}: ${sign}${val.toFixed(2)}%`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false,
+          },
+          ticks: {
+            color: isDark ? '#94a3b8' : '#64748b',
+            font: { size: 12, weight: 'bold', family: "'Prompt', 'Inter', sans-serif" }
+          }
+        },
+        y: {
+          grid: {
+            color: isDark ? 'rgba(148, 163, 184, 0.08)' : 'rgba(148, 163, 184, 0.14)',
+          },
+          ticks: {
+            color: isDark ? '#94a3b8' : '#64748b',
+            font: { size: 11, weight: '600', family: "'Prompt', 'Inter', sans-serif" },
+            callback: (val) => `${val >= 0 ? '+' : ''}${val}%`
+          }
+        }
+      }
+    }
+  });
 }
 
+/* ================= 10.1 COMPARE CONTROLS (DELETE, COLLAPSE, CLEAR, CLOSE) ================= */
 function removeFundFromCompare(fundId) {
+  if (!fundId) return;
   state.selectedFunds.delete(fundId);
-  
-  // Refresh checkboxes in the screener table
-  renderFundTable();
 
+  // Sync compare badge
   const badge = document.getElementById('compareCount');
   if (badge) badge.textContent = state.selectedFunds.size;
 
-  if (state.selectedFunds.size === 0) {
-    const content = document.getElementById('inlineCompareContent');
-    if (content) {
-      content.innerHTML = `
-        <div class="text-center py-10 text-slate-400">
-          <div class="text-3xl mb-2">⚖️</div>
-          <p class="text-sm font-bold text-slate-700 dark:text-slate-200">ไม่มีกองทุนที่เลือกเปรียบเทียบ</p>
-          <p class="text-xs text-slate-400 mt-1">กรุณาติ๊กเลือกช่องหน้ารายชื่อกองทุนในตารางด้านบนเพื่อเปรียบเทียบ</p>
-        </div>
-      `;
-    }
-  } else {
-    renderInlineCompare();
-  }
-}
+  // Refresh floating compare dock & table checkboxes
+  updateFloatingCompareDock();
+  renderFundTable();
 
-function toggleCompareDropdown() {
-  const menu = document.getElementById('compareDropdownMenu');
-  const chevron = document.getElementById('compareDropdownChevron');
-  if (!menu) return;
-  const isHidden = menu.classList.contains('hidden');
-  if (isHidden) {
-    menu.classList.remove('hidden');
-    if (chevron) chevron.classList.add('rotate-180');
-  } else {
-    menu.classList.add('hidden');
-    if (chevron) chevron.classList.remove('rotate-180');
+  // If comparison section is open, re-render or close if empty
+  const container = document.getElementById('inlineCompareContainer');
+  if (container && !container.classList.contains('hidden')) {
+    if (state.selectedFunds.size >= 1) {
+      renderInlineCompare();
+    } else {
+      closeInlineCompare();
+    }
   }
 }
 
 function toggleInlineCompareCollapse() {
   const content = document.getElementById('inlineCompareContent');
-  const text = document.getElementById('compareCollapseText');
   const icon = document.getElementById('compareCollapseIcon');
-  const menu = document.getElementById('compareDropdownMenu');
-  if (menu) menu.classList.add('hidden');
-  const chevron = document.getElementById('compareDropdownChevron');
-  if (chevron) chevron.classList.remove('rotate-180');
-
+  const text = document.getElementById('compareCollapseText');
   if (!content) return;
-  const isHidden = content.classList.contains('hidden');
-  if (isHidden) {
+
+  const isCollapsed = content.classList.contains('hidden');
+  if (isCollapsed) {
     content.classList.remove('hidden');
-    if (text) text.textContent = 'ย่อตาราง';
     if (icon) icon.textContent = '🔼';
+    if (text) text.textContent = 'ย่อส่วนนี้';
   } else {
     content.classList.add('hidden');
-    if (text) text.textContent = 'ขยายตาราง';
     if (icon) icon.textContent = '🔽';
+    if (text) text.textContent = 'ขยายส่วนนี้';
   }
 }
 
 function clearAllCompareFunds() {
   state.selectedFunds.clear();
-  renderFundTable();
+
   const badge = document.getElementById('compareCount');
   if (badge) badge.textContent = '0';
-  
-  const menu = document.getElementById('compareDropdownMenu');
-  if (menu) menu.classList.add('hidden');
-  const chevron = document.getElementById('compareDropdownChevron');
-  if (chevron) chevron.classList.remove('rotate-180');
 
-  const content = document.getElementById('inlineCompareContent');
-  if (content) {
-    content.innerHTML = `
-      <div class="text-center py-10 text-slate-400">
-        <div class="text-3xl mb-2">⚖️</div>
-        <p class="text-sm font-bold text-slate-700 dark:text-slate-200">ไม่มีกองทุนที่เลือกเปรียบเทียบ</p>
-        <p class="text-xs text-slate-400 mt-1">กรุณาติ๊กเลือกช่องหน้ารายชื่อกองทุนในตารางด้านบนเพื่อเปรียบเทียบ</p>
-      </div>
-    `;
+  updateFloatingCompareDock();
+  renderFundTable();
+  closeInlineCompare();
+}
+
+function closeInlineCompare() {
+  const container = document.getElementById('inlineCompareContainer');
+  if (container) {
+    container.classList.add('hidden');
   }
 }
 
-// Close compare dropdown when clicking outside
-document.addEventListener('click', (e) => {
-  const dropdownContainer = document.getElementById('compareDropdownContainer');
-  const menu = document.getElementById('compareDropdownMenu');
-  const chevron = document.getElementById('compareDropdownChevron');
-  if (dropdownContainer && menu && !dropdownContainer.contains(e.target)) {
-    menu.classList.add('hidden');
-    if (chevron) chevron.classList.remove('rotate-180');
-  }
-});
+// Global window bindings to guarantee accessibility from HTML inline handlers
+window.removeFundFromCompare = removeFundFromCompare;
+window.toggleInlineCompareCollapse = toggleInlineCompareCollapse;
+window.clearAllCompareFunds = clearAllCompareFunds;
+window.closeInlineCompare = closeInlineCompare;
+window.openCompareModal = openCompareModal;
+window.state = state;
 
 /* ================= 11. STOCK DETAIL POPUP ================= */
 function showStockDetail(stockName) {

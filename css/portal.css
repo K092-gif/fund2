@@ -1378,3 +1378,117 @@ body {
   color: #c2410c;
 }
 
+/* ==========================================================================
+   DARK MODE FIXES & EXPANDED ROW OVERRIDES
+   ========================================================================== */
+.dark .fi-tr-expand,
+.dark .fi-tr-expand td {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+.bg-slate-750 { background-color: #1e293b; }
+.bg-slate-850 { background-color: #111827; }
+.dark .dark\:bg-slate-850 { background-color: #111827 !important; }
+.dark .dark\:bg-slate-750 { background-color: #1e293b !important; }
+
+/* ==========================================================================
+   PASTEL COMPARISON COLUMNS & WINNER HIGHLIGHTS
+   ========================================================================== */
+.compare-col-0 {
+  background-color: rgba(239, 246, 255, 0.55); /* Soft pastel blue */
+}
+.dark .compare-col-0 {
+  background-color: rgba(30, 58, 138, 0.14) !important;
+}
+
+.compare-col-1 {
+  background-color: rgba(236, 253, 245, 0.55); /* Soft pastel emerald */
+}
+.dark .compare-col-1 {
+  background-color: rgba(6, 78, 59, 0.14) !important;
+}
+
+.compare-col-2 {
+  background-color: rgba(245, 243, 255, 0.55); /* Soft pastel violet/purple - distinct from winner amber! */
+}
+.dark .compare-col-2 {
+  background-color: rgba(88, 28, 135, 0.14) !important;
+}
+
+.compare-col-3 {
+  background-color: rgba(240, 249, 255, 0.55); /* Soft pastel sky/cyan */
+}
+.dark .compare-col-3 {
+  background-color: rgba(3, 105, 161, 0.14) !important;
+}
+
+/* Winner Column: Unique warm champagne gold highlight */
+.compare-col-winner {
+  background-color: rgba(254, 243, 199, 0.75) !important;
+  border-left-color: rgba(245, 158, 11, 0.6) !important;
+  border-right-color: rgba(245, 158, 11, 0.6) !important;
+}
+.dark .compare-col-winner {
+  background-color: rgba(217, 119, 6, 0.22) !important;
+  border-left-color: rgba(245, 158, 11, 0.5) !important;
+  border-right-color: rgba(245, 158, 11, 0.5) !important;
+}
+
+.winner-glow {
+  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.25), 0 8px 10px -6px rgba(245, 158, 11, 0.2);
+}
+.dark .winner-glow {
+  box-shadow: 0 12px 28px -4px rgba(245, 158, 11, 0.25), 0 0 12px rgba(245, 158, 11, 0.2);
+}
+
+/* Tooltip for Criteria on Top Summary Card */
+.card-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.card-tooltip .tooltip-content {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  top: calc(100% + 10px);
+  right: -6px;
+  width: 290px;
+  max-width: min(320px, calc(100vw - 40px));
+  background-color: #0f172a;
+  color: #f8fafc;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: normal;
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.15);
+  z-index: 1000;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  pointer-events: none;
+}
+.card-tooltip .tooltip-content::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: 22px;
+  width: 10px;
+  height: 10px;
+  background-color: #0f172a;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  transform: rotate(45deg);
+}
+.card-tooltip:hover .tooltip-content,
+.card-tooltip:focus-within .tooltip-content,
+.card-tooltip.is-active .tooltip-content {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+

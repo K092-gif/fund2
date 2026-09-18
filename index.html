@@ -29,7 +29,10 @@
               700: '#0e318f',
               800: '#0a2366',
               900: '#0b1942'
-            }
+            },
+            'slate-750': '#1e293b',
+            'slate-850': '#111827',
+            'slate-950': '#090d16'
           },
           fontFamily: {
             sans: ['Prompt', 'Noto Sans Thai', 'sans-serif'],
@@ -1280,27 +1283,32 @@
         </div>
 
         <!-- Side-by-Side Fund Comparison Table (แสดงต่อท้ายตารางกองทุน) -->
-        <div id="inlineCompareContainer" class="hidden mt-8 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden scroll-mt-6">
-          <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850/50">
-            <div class="flex items-center gap-2.5">
-              <span class="text-xl">⚖️</span>
+        <div id="inlineCompareContainer" class="hidden mt-8 mb-28 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden scroll-mt-6">
+          <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50/70 dark:bg-slate-850/50">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/60 flex items-center justify-center text-xl shrink-0 shadow-2xs">
+                📊
+              </div>
               <div>
-                <h3 class="font-black text-base text-slate-900 dark:text-white">เปรียบเทียบข้อมูลกองทุน Side-by-Side</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400">เปรียบเทียบตัวชี้วัด ความเสี่ยง ผลตอบแทน และนโยบายกองทุนที่เลือก</p>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="font-black text-base sm:text-lg text-slate-900 dark:text-white">เปรียบเทียบกองทุน &amp; กราฟวิเคราะห์</h3>
+                  <span id="compareHeaderBadge" class="bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 font-extrabold text-xs px-2.5 py-0.5 rounded-full num">0/4 กองทุน</span>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">วิเคราะห์เปรียบเทียบผลตอบแทนย้อนหลัง แนวโน้มการเติบโต และรายละเอียดเชิงลึกแบบคู่ขนาน</p>
               </div>
             </div>
             <!-- Toolbar ปุ่มควบคุมแยกแต่ละปุ่ม -->
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 self-end sm:self-auto">
               <!-- ปุ่มย่อ/ขยายตาราง -->
               <button 
                 type="button" 
                 onclick="toggleInlineCompareCollapse()" 
                 id="compareCollapseBtn" 
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 shadow-xs transition"
-                title="ย่อหรือขยายตารางเปรียบเทียบ"
+                title="ย่อหรือขยายส่วนนี้"
               >
                 <span id="compareCollapseIcon">🔼</span>
-                <span id="compareCollapseText">ย่อตาราง</span>
+                <span id="compareCollapseText">ย่อส่วนนี้</span>
               </button>
 
               <!-- ปุ่มล้างกองทุนที่เลือกทั้งหมด -->
@@ -1319,7 +1327,7 @@
                 type="button" 
                 onclick="closeInlineCompare()" 
                 class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 shadow-xs transition"
-                title="ปิดแถบเปรียบเทียบ"
+                title="ปิดส่วนเปรียบเทียบ"
               >
                 <span>✕</span>
                 <span>ปิด</span>
@@ -1718,6 +1726,31 @@
       </div>
     </div>
   </footer>
+
+  <!-- Floating Bottom Compare Dock (บาร์เปรียบเทียบลอยด้านล่าง) -->
+  <div id="floatingCompareDock" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 pointer-events-auto">
+    <div class="bg-slate-900/95 dark:bg-slate-900/95 backdrop-blur-md text-white px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center gap-3 sm:gap-4 max-w-[95vw]">
+      <div class="flex items-center gap-2 shrink-0">
+        <span class="text-lg">⚖️</span>
+        <div class="hidden sm:block">
+          <div class="font-bold text-xs text-white">เปรียบเทียบกองทุน</div>
+          <div class="text-[10px] text-slate-400">เลือกแล้ว <span id="dockSelectedCount">0</span>/4 กองทุน</div>
+        </div>
+      </div>
+      <!-- Selected Fund Chips Container -->
+      <div class="flex items-center gap-1.5 overflow-x-auto py-1 max-w-[42vw] sm:max-w-md no-scrollbar" id="dockChipsContainer"></div>
+      <!-- Actions -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="button" onclick="openCompareModal()" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-xs transition flex items-center gap-1.5 whitespace-nowrap">
+          <span>📊</span>
+          <span>ดูการเปรียบเทียบ &amp; กราฟ</span>
+        </button>
+        <button type="button" onclick="clearAllCompareFunds()" class="text-xs font-semibold text-slate-400 hover:text-white px-2 py-1 transition whitespace-nowrap">
+          ล้าง
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts -->
   <script src="js/mock_data.js"></script>
